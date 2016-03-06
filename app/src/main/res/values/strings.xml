@@ -7,4 +7,6 @@
 
     <string name="name">Vitaly Zayankovsky</string>
     <string name="email">zayankovsky@gmail.com</string>
+
+    <string name="imageview_description">Image Thumbnail</string>
 </resources>
