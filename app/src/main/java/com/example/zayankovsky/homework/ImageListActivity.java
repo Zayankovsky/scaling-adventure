@@ -23,6 +23,8 @@ import android.view.MenuItem;
 public class ImageListActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, ImageListFragment.OnImageListInteractionListener {
 
+    ViewPager mViewPager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,7 +38,7 @@ public class ImageListActivity extends AppCompatActivity
         SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
         // Set up the ViewPager with the sections adapter.
-        ViewPager mViewPager = (ViewPager) findViewById(R.id.container);
+        mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
@@ -57,8 +59,29 @@ public class ImageListActivity extends AppCompatActivity
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        final NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                onPageSelected(position);
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                if (position == 0) {
+                    navigationView.setCheckedItem(R.id.nav_gallery);
+                } else if (position == 1) {
+                    navigationView.setCheckedItem(R.id.nav_fotki);
+                } else if (position == 2) {
+                    navigationView.setCheckedItem(R.id.nav_cache);
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {}
+        });
 
         final DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -103,17 +126,15 @@ public class ImageListActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
+        if (id == R.id.nav_gallery) {
+            mViewPager.setCurrentItem(0);
+        } else if (id == R.id.nav_fotki) {
+            mViewPager.setCurrentItem(1);
+        } else if (id == R.id.nav_cache) {
+            mViewPager.setCurrentItem(2);
+        } else if (id == R.id.nav_rate) {
 
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
+        } else if (id == R.id.nav_settings) {
 
         }
 
@@ -162,11 +183,11 @@ public class ImageListActivity extends AppCompatActivity
         public CharSequence getPageTitle(int position) {
             switch (position) {
                 case 0:
-                    return "Галерея";
+                    return getResources().getString(R.string.gallery);
                 case 1:
-                    return "ЯФотки";
+                    return getResources().getString(R.string.fotki);
                 case 2:
-                    return "Кэш";
+                    return getResources().getString(R.string.cache);
             }
             return null;
         }

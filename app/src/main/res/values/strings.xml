@@ -5,8 +5,18 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
-    <string name="name">Vitaly Zayankovsky</string>
+    <string name="name">Виталий Заянковский</string>
+    <string name="github">Github: Zayankovsky</string>
     <string name="email">zayankovsky@gmail.com</string>
+
+    <string name="gallery">Галерея</string>
+    <string name="fotki">ЯФотки</string>
+    <string name="cache">Кэш</string>
+
+    <string name="more">Ещё</string>
+
+    <string name="rate">Написать отзыв</string>
+    <string name="settings">Настройки</string>
 
     <string name="imageview_description">Image Thumbnail</string>
 </resources>
