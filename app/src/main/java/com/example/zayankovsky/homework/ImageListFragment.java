@@ -1,6 +1,7 @@
 package com.example.zayankovsky.homework;
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
@@ -64,6 +65,14 @@ public class ImageListFragment extends Fragment {
             }
 
             recyclerView.setAdapter(new ImageListAdapter(mListener));
+            recyclerView.addItemDecoration(new RecyclerView.ItemDecoration() {
+                @Override
+                public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
+                    outRect.left = 5;
+                    outRect.top = 5;
+                    outRect.bottom = 5;
+                }
+            });
         }
         return view;
     }

@@ -89,7 +89,7 @@ public class ImageWorker {
         options.inSampleSize = 2 + (mColumnCount < 4 ? 0 : 2);
 
         getFromCacheOrResources(
-                thumbnailCaches.get(mColumnCount - 2), imageView, options, position, mScreenWidth / mColumnCount
+                thumbnailCaches.get(mColumnCount - 2), imageView, options, position, mScreenWidth / mColumnCount - 10
         );
     }
 
