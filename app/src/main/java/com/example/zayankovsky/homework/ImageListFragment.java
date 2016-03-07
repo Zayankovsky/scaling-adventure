@@ -96,6 +96,6 @@ public class ImageListFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnImageListInteractionListener {
-        void onImageListInteraction(int position);
+        void onImageListInteraction(ImageListAdapter.ViewHolder holder);
     }
 }

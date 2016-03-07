@@ -1,6 +1,8 @@
 package com.example.zayankovsky.homework;
 
+import android.app.ActivityOptions;
 import android.content.Intent;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
@@ -150,16 +152,13 @@ public class ImageListActivity extends AppCompatActivity
     }
 
     @Override
-    public void onImageListInteraction(int position) {
+    public void onImageListInteraction(ImageListAdapter.ViewHolder holder) {
         final Intent i = new Intent(this, ImageDetailActivity.class);
-        i.putExtra(ImageDetailActivity.POSITION, position);
-        // makeThumbnailScaleUpAnimation() looks kind of ugly here as the loading spinner may
-        // show plus the thumbnail image in GridView is cropped. so using
-        // makeScaleUpAnimation() instead.
-        //ActivityOptions options =
-        //        ActivityOptions.makeScaleUpAnimation(v, 0, 0, v.getWidth(), v.getHeight());
-        //startActivity(i, options.toBundle());
-        startActivity(i);
+        i.putExtra(ImageDetailActivity.POSITION, holder.position);
+        ActivityOptions options = ActivityOptions.makeThumbnailScaleUpAnimation(
+                holder.mView, ((BitmapDrawable) holder.mImageView.getDrawable()).getBitmap(), 0, 0
+        );
+        startActivity(i, options.toBundle());
     }
 
     /**
