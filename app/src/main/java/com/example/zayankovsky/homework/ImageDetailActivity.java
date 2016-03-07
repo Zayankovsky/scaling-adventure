@@ -18,19 +18,15 @@ package com.example.zayankovsky.homework;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.app.NavUtils;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.WindowManager.LayoutParams;
 
-public class ImageDetailActivity extends AppCompatActivity implements OnClickListener {
+public class ImageDetailActivity extends FragmentActivity implements OnClickListener {
     public static final String POSITION = "position";
 
     private ViewPager mPager;
@@ -49,70 +45,12 @@ public class ImageDetailActivity extends AppCompatActivity implements OnClickLis
 
         // Set up activity to go full screen
         getWindow().addFlags(LayoutParams.FLAG_FULLSCREEN);
-        getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-        );
-
-        // Enable some additional newer visibility and ActionBar features to create a more
-        // immersive photo viewing experience
-        final ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            // Set home as up
-            actionBar.setDisplayHomeAsUpEnabled(true);
-
-            // Hide and show the ActionBar as the visibility changes
-            mPager.setOnSystemUiVisibilityChangeListener(
-                    new View.OnSystemUiVisibilityChangeListener() {
-                        @Override
-                        public void onSystemUiVisibilityChange(int vis) {
-                            if ((vis & View.SYSTEM_UI_FLAG_LOW_PROFILE) != 0) {
-                                actionBar.hide();
-                            } else {
-                                actionBar.show();
-                            }
-                        }
-                    });
-
-            // Start low profile mode and hide ActionBar
-            mPager.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
-            actionBar.hide();
-        }
-
-        mPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-            }
-
-            @Override
-            public void onPageSelected(int position) {
-                setTitle(ImageWorker.getImageName(position));
-            }
-
-            @Override
-            public void onPageScrollStateChanged(int state) {
-            }
-        });
 
         // Set the current item based on the extra passed in to this activity
-        final int position = getIntent().getIntExtra(POSITION, 0);
-        mPager.setCurrentItem(position);
-        setTitle(ImageWorker.getImageName(position));
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                NavUtils.navigateUpFromSameTask(this);
-                return true;
+        final int position = getIntent().getIntExtra(POSITION, -1);
+        if (position != -1) {
+            mPager.setCurrentItem(position);
         }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
     }
 
     /**
