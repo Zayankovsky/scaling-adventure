@@ -63,7 +63,7 @@ public class ImageListFragment extends Fragment {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
 
-            recyclerView.setAdapter(new ImageListAdapter(mColumnCount, mListener));
+            recyclerView.setAdapter(new ImageListAdapter(mListener));
         }
         return view;
     }

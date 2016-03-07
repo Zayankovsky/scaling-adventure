@@ -22,47 +22,79 @@ import android.graphics.BitmapFactory;
 import android.util.SparseArray;
 import android.widget.ImageView;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * This class wraps up completing some arbitrary work when loading a bitmap to an ImageView.
- * It handles things like using a memory cache and scaling bitmaps.
+ * It handles things like using a memory cache, scaling bitmaps and loading them randomly.
  */
 public class ImageWorker {
 
     private static Resources mResources;
     private static int mScreenWidth;
     private static int mScreenDensity;
+    private static int mColumnCount;
 
-    private static int [] imageIds = {
+    private static int[] imageIds = {
             R.drawable.image_1, R.drawable.image_2, R.drawable.image_3,
             R.drawable.image_4, R.drawable.image_5, R.drawable.image_6,
     };
 
-    private static HashMap<Integer, SparseArray<Bitmap>> thumbnailCaches = new HashMap<>();
+    private static ArrayList<SparseArray<Bitmap>> thumbnailCaches = new ArrayList<>(5);
     private static SparseArray<Bitmap> imageCache = new SparseArray<>();
+    private static ArrayList<Integer> randomizer = new ArrayList<>(720);
 
-    public static void init(Resources resources, int screenWidth, int screenDensity) {
+    private static int[] indexes = {0, 1, 2, 3, 4, 5};
+
+    private static void permute(int start) {
+        if (start == 5) {
+            randomizer.add(
+                    indexes[0] + 6 * indexes[1] + 36 * indexes[2] + 216 * indexes[3] + 1296 * indexes[4] + 7776 * indexes[5]
+            );
+        } else {
+            permute(start + 1);
+            for (int i = start + 1; i < 6; ++i) {
+                indexes[start] ^= indexes[i];
+                indexes[i] ^= indexes[start];
+                indexes[start] ^= indexes[i];
+
+                permute(start + 1);
+
+                indexes[start] ^= indexes[i];
+                indexes[i] ^= indexes[start];
+                indexes[start] ^= indexes[i];
+            }
+        }
+    }
+
+    static {
+        for (int i = 0; i < 5; ++i) {
+            thumbnailCaches.add(new SparseArray<Bitmap>());
+        }
+
+        permute(0);
+        Collections.shuffle(randomizer);
+    }
+
+    public static void init(Resources resources, int screenWidth, int screenDensity, int columnCount) {
         mResources = resources;
         mScreenWidth = screenWidth;
         mScreenDensity = screenDensity;
+        mColumnCount = columnCount;
     }
 
-    public static void loadThumbnail(int columnCount, int position, ImageView imageView) {
-        SparseArray<Bitmap> thumbnailCache = thumbnailCaches.get(columnCount);
-
-        if (thumbnailCache == null) {
-            thumbnailCache = new SparseArray<>();
-            thumbnailCaches.put(columnCount, thumbnailCache);
-        }
-
+    public static void loadThumbnail(int position, ImageView imageView) {
         BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = 2 + (columnCount < 4 ? 0 : 2);
-        getFromCacheOrResources(thumbnailCache, imageView, position, options, mScreenWidth / columnCount);
+        options.inSampleSize = 2 + (mColumnCount < 4 ? 0 : 2);
+
+        getFromCacheOrResources(
+                thumbnailCaches.get(mColumnCount - 2), imageView, options, position, mScreenWidth / mColumnCount
+        );
     }
 
     public static void loadImage(int position, ImageView imageView) {
-        getFromCacheOrResources(imageCache, imageView, position, new BitmapFactory.Options(), 0);
+        getFromCacheOrResources(imageCache, imageView, new BitmapFactory.Options(), position, 0);
     }
 
     /**
@@ -73,8 +105,12 @@ public class ImageWorker {
      * @param position The position of the ImageView to bind the image to.
      */
     private static void getFromCacheOrResources(SparseArray<Bitmap> cache, ImageView imageView,
-                                                int position, BitmapFactory.Options options, int size) {
-        int imageId = imageIds[position % imageIds.length];
+                                                BitmapFactory.Options options, int position, int size) {
+        int permutation = randomizer.get(position / mColumnCount % 720);
+        for (int i = 0; i < position % mColumnCount; ++i) {
+            permutation /= 6;
+        }
+        int imageId = imageIds[permutation % 6];
         Bitmap value = cache.get(imageId);
 
         if (value == null) {

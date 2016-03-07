@@ -36,12 +36,11 @@ public class ImageListActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        int columnCount = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(this).getString("column_count", "4"));
+
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
-        SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(
-                getSupportFragmentManager(),
-                Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(this).getString("column_count", "4"))
-        );
+        SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(), columnCount);
 
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.container);
@@ -92,7 +91,7 @@ public class ImageListActivity extends AppCompatActivity
 
         final DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        ImageWorker.init(getResources(), displayMetrics.widthPixels, displayMetrics.densityDpi);
+        ImageWorker.init(getResources(), displayMetrics.widthPixels, displayMetrics.densityDpi, columnCount);
     }
 
     @Override

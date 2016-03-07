@@ -12,11 +12,9 @@ import android.widget.ImageView;
  */
 public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.ViewHolder> {
 
-    private int mColumnCount;
     private final ImageListFragment.OnImageListInteractionListener mListener;
 
-    public ImageListAdapter(int columnCount, ImageListFragment.OnImageListInteractionListener listener) {
-        mColumnCount = columnCount;
+    public ImageListAdapter(ImageListFragment.OnImageListInteractionListener listener) {
         mListener = listener;
     }
 
@@ -30,7 +28,7 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.position = position;
-        ImageWorker.loadThumbnail(mColumnCount, position, holder.mImageView);
+        ImageWorker.loadThumbnail(position, holder.mImageView);
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
