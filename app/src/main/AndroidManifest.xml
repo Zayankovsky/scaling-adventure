@@ -19,9 +19,9 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ImageDetailActivity"
-            android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar" >
+            android:name=".ImageDetailActivity" >
+            <meta-data android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ImageListActivity" />
         </activity>
         <activity
             android:name=".SettingsActivity"

@@ -89,4 +89,8 @@ public class ImageWorker {
 
         imageView.setImageBitmap(value);
     }
+
+    public static String getImageName(int position) {
+        return mResources.getResourceEntryName(imageIds[position % imageIds.length]);
+    }
 }
