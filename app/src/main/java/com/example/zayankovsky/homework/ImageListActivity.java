@@ -2,6 +2,7 @@ package com.example.zayankovsky.homework;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -35,7 +36,10 @@ public class ImageListActivity extends AppCompatActivity
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
-        SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+        SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(
+                getSupportFragmentManager(),
+                Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(this).getString("column_count", "4"))
+        );
 
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.container);
@@ -80,7 +84,8 @@ public class ImageListActivity extends AppCompatActivity
             }
 
             @Override
-            public void onPageScrollStateChanged(int state) {}
+            public void onPageScrollStateChanged(int state) {
+            }
         });
 
         final DisplayMetrics displayMetrics = new DisplayMetrics();
@@ -114,6 +119,7 @@ public class ImageListActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
             return true;
         }
 
@@ -135,7 +141,7 @@ public class ImageListActivity extends AppCompatActivity
         } else if (id == R.id.nav_rate) {
 
         } else if (id == R.id.nav_settings) {
-
+            startActivity(new Intent(this, SettingsActivity.class));
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -162,15 +168,18 @@ public class ImageListActivity extends AppCompatActivity
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
-        public SectionsPagerAdapter(FragmentManager fm) {
+        private int mColumnCount;
+
+        public SectionsPagerAdapter(FragmentManager fm, int columnCount) {
             super(fm);
+            mColumnCount = columnCount;
         }
 
         @Override
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             // Return a ImageListFragment.
-            return ImageListFragment.newInstance(position + 1, 4);
+            return ImageListFragment.newInstance(mColumnCount);
         }
 
         @Override

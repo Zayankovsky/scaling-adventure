@@ -15,9 +15,7 @@ public class ImageListFragment extends Fragment {
      * The fragment argument representing the section number for this
      * fragment.
      */
-    private static final String ARG_SECTION_NUMBER = "section_number";
-
-    private static final String ARG_COLUMN_COUNT = "column-count";
+    private static final String COLUMN_COUNT = "column-count";
 
     private int mColumnCount = 4;
     private OnImageListInteractionListener mListener;
@@ -33,11 +31,10 @@ public class ImageListFragment extends Fragment {
      * Returns a new instance of this fragment for the given section
      * number.
      */
-    public static ImageListFragment newInstance(int sectionNumber, int columnCount) {
+    public static ImageListFragment newInstance(int columnCount) {
         ImageListFragment fragment = new ImageListFragment();
         Bundle args = new Bundle();
-        args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-        args.putInt(ARG_COLUMN_COUNT, columnCount);
+        args.putInt(COLUMN_COUNT, columnCount);
         fragment.setArguments(args);
         return fragment;
     }
@@ -47,7 +44,7 @@ public class ImageListFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         if (getArguments() != null) {
-            mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
+            mColumnCount = getArguments().getInt(COLUMN_COUNT);
         }
     }
 
