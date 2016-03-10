@@ -26,12 +26,12 @@
 
     <string name="pref_title_theme">Тема оформления</string>
     <string-array name="pref_theme_titles">
-        <item>Тема №1</item>
-        <item>Тема №2</item>
+        <item>Светлая тема</item>
+        <item>Тёмная тема</item>
     </string-array>
     <string-array name="pref_theme_values">
-        <item>1</item>
-        <item>2</item>
+        <item>light</item>
+        <item>dark</item>
     </string-array>
 
     <string name="pref_title_column_count">Число столбцов</string>

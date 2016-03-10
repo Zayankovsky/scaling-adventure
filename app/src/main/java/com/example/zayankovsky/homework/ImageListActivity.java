@@ -2,7 +2,9 @@ package com.example.zayankovsky.homework;
 
 import android.app.ActivityOptions;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -30,16 +32,19 @@ public class ImageListActivity extends AppCompatActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        String theme = sharedPref.getString("theme", "light");
+        setTheme(theme.equals("dark") ? R.style.DarkAppTheme_NoActionBar : R.style.LightAppTheme_NoActionBar);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.image_list);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        int columnCount = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(this).getString("column_count", "4"));
-
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
+        int columnCount = Integer.parseInt(sharedPref.getString("column_count", "4"));
         SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(), columnCount);
 
         // Set up the ViewPager with the sections adapter.
@@ -55,7 +60,7 @@ public class ImageListActivity extends AppCompatActivity
             public void onClick(View view) {
                 Intent intent = new Intent(Intent.ACTION_SENDTO);
                 intent.setData(Uri.parse("mailto:")); // only email apps should handle this
-                intent.putExtra(Intent.EXTRA_EMAIL, new String[] {getResources().getString(R.string.email)});
+                intent.putExtra(Intent.EXTRA_EMAIL, new String[]{getResources().getString(R.string.email)});
                 if (intent.resolveActivity(getPackageManager()) != null) {
                     startActivity(intent);
                 }
@@ -71,6 +76,15 @@ public class ImageListActivity extends AppCompatActivity
         final NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         navigationView.setCheckedItem(R.id.nav_gallery);
+
+        GradientDrawable gradientDrawable = new GradientDrawable(
+                GradientDrawable.Orientation.BR_TL, theme.equals("dark") ?
+                new int[]{0xFF4CAF50, 0xFF388E3C, 0xFF1B5E20} : new int[] {0xFFC8E6C9, 0xFF81C784, 0xFF4CAF50}
+        );
+        gradientDrawable.setGradientType(GradientDrawable.LINEAR_GRADIENT);
+        gradientDrawable.setShape(GradientDrawable.RECTANGLE);
+
+        navigationView.getHeaderView(0).setBackground(gradientDrawable);
 
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override

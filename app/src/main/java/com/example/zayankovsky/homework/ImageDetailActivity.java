@@ -17,6 +17,7 @@
 package com.example.zayankovsky.homework;
 
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
@@ -35,6 +36,10 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.image_detail);
+        getWindow().getDecorView().setBackgroundResource(
+                PreferenceManager.getDefaultSharedPreferences(this).getString("theme", "light").equals("dark") ?
+                        R.color.darkColorTransparent : R.color.lightColorTransparent
+        );
 
         // Set up ViewPager and backing adapter
         ImagePagerAdapter mAdapter = new ImagePagerAdapter(getSupportFragmentManager());

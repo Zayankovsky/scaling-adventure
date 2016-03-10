@@ -1,6 +1,7 @@
 package com.example.zayankovsky.homework;
 
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -29,6 +30,9 @@ import java.util.List;
 public class SettingsActivity extends AppCompatPreferenceActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(PreferenceManager.getDefaultSharedPreferences(this).getString("theme", "light").equals("dark") ?
+                R.style.DarkAppTheme : R.style.LightAppTheme);
+
         super.onCreate(savedInstanceState);
         setupActionBar();
     }
@@ -67,45 +71,47 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     }
 
     /**
-     * A preference value change listener that updates the preference's summary
-     * to reflect its new value.
-     */
-    private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object value) {
-            String stringValue = value.toString();
-
-            if (preference instanceof ListPreference) {
-                // For list preferences, look up the correct display value in
-                // the preference's 'entries' list.
-                ListPreference listPreference = (ListPreference) preference;
-                int index = listPreference.findIndexOfValue(stringValue);
-
-                // Set the summary to reflect the new value.
-                preference.setSummary(
-                        index >= 0
-                                ? listPreference.getEntries()[index]
-                                : null);
-
-            } else {
-                // For all other preferences, set the summary to the value's
-                // simple string representation.
-                preference.setSummary(stringValue);
-            }
-            return true;
-        }
-    };
-
-    /**
      * Binds a preference's summary to its value. More specifically, when the
      * preference's value is changed, its summary (line of text below the
      * preference title) is updated to reflect the value. The summary is also
      * immediately updated upon calling this method. The exact display format is
      * dependent on the type of preference.
-     *
-     * @see #sBindPreferenceSummaryToValueListener
      */
-    private static void bindPreferenceSummaryToValue(Preference preference) {
+    private static void bindPreferenceSummaryToValue(Preference preference, final Activity activity) {
+        /**
+         * A preference value change listener that updates the preference's summary
+         * to reflect its new value.
+         */
+        Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object value) {
+                String stringValue = value.toString();
+
+                if (preference instanceof ListPreference) {
+                    // For list preferences, look up the correct display value in
+                    // the preference's 'entries' list.
+                    ListPreference listPreference = (ListPreference) preference;
+                    int index = listPreference.findIndexOfValue(stringValue);
+
+                    // Set the summary to reflect the new value.
+                    preference.setSummary(
+                            index >= 0
+                                    ? listPreference.getEntries()[index]
+                                    : null);
+
+                } else {
+                    // For all other preferences, set the summary to the value's
+                    // simple string representation.
+                    preference.setSummary(stringValue);
+                }
+                if (preference.getKey().equals("theme")
+                        && !preference.getSharedPreferences().getString("theme", "").equals(stringValue)) {
+                    activity.recreate();
+                }
+                return true;
+            }
+        };
+
         // Set the listener to watch for value changes.
         preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
 
@@ -128,8 +134,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
     @Override
     public void onBackPressed() {
-        if (GeneralPreferenceFragment.isCreated) {
-            super.onBackPressed();
+        if (GeneralPreferenceFragment.isVisible) {
+            startActivity(new Intent(this, SettingsActivity.class));
         } else {
             NavUtils.navigateUpFromSameTask(this);
         }
@@ -151,7 +157,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
      */
     public static class GeneralPreferenceFragment extends PreferenceFragment {
 
-        private static boolean isCreated = false;
+        private static boolean isVisible = false;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -162,17 +168,20 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             // Bind the summaries of List preferences to their values.
             // When their values change, their summaries are updated
             // to reflect the new value, per the Android Design guidelines.
-            bindPreferenceSummaryToValue(findPreference("theme"));
-            bindPreferenceSummaryToValue(findPreference("column_count"));
-
-            isCreated = true;
+            bindPreferenceSummaryToValue(findPreference("theme"), getActivity());
+            bindPreferenceSummaryToValue(findPreference("column_count"), getActivity());
         }
 
         @Override
-        public void onDestroy() {
-            isCreated = false;
+        public void onResume() {
+            super.onResume();
+            isVisible = true;
+        }
 
-            super.onDestroy();
+        @Override
+        public void onPause() {
+            isVisible = false;
+            super.onPause();
         }
 
         @Override

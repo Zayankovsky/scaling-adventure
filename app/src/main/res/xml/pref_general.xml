@@ -6,7 +6,7 @@
     <ListPreference
         android:key="theme"
         android:title="@string/pref_title_theme"
-        android:defaultValue="1"
+        android:defaultValue="light"
         android:entries="@array/pref_theme_titles"
         android:entryValues="@array/pref_theme_values"
         android:negativeButtonText="@null"
