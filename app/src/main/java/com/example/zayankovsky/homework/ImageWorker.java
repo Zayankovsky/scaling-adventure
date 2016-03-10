@@ -32,7 +32,6 @@ import java.util.Collections;
 public class ImageWorker {
 
     private static Resources mResources;
-    private static int mScreenWidth;
     private static int mScreenDensity;
     private static int mColumnCount;
 
@@ -41,6 +40,7 @@ public class ImageWorker {
             R.drawable.image_4, R.drawable.image_5, R.drawable.image_6,
     };
 
+    private static ArrayList<Integer> thumbnailSizes = new ArrayList<>(5);
     private static ArrayList<SparseArray<Bitmap>> thumbnailCaches = new ArrayList<>(5);
     private static SparseArray<Bitmap> imageCache = new SparseArray<>();
     private static ArrayList<Integer> randomizer = new ArrayList<>(720);
@@ -70,6 +70,7 @@ public class ImageWorker {
 
     static {
         for (int i = 0; i < 5; ++i) {
+            thumbnailSizes.add(0);
             thumbnailCaches.add(new SparseArray<Bitmap>());
         }
 
@@ -79,9 +80,14 @@ public class ImageWorker {
 
     public static void init(Resources resources, int screenWidth, int screenDensity, int columnCount) {
         mResources = resources;
-        mScreenWidth = screenWidth;
         mScreenDensity = screenDensity;
         mColumnCount = columnCount;
+
+        int size = screenWidth / mColumnCount - 10;
+        if (!thumbnailSizes.get(mColumnCount - 2).equals(size)) {
+            thumbnailSizes.set(mColumnCount - 2, size);
+            thumbnailCaches.get(mColumnCount - 2).clear();
+        }
     }
 
     public static void loadThumbnail(int position, ImageView imageView) {
@@ -89,7 +95,7 @@ public class ImageWorker {
         options.inSampleSize = 2 + (mColumnCount < 4 ? 0 : 2);
 
         getFromCacheOrResources(
-                thumbnailCaches.get(mColumnCount - 2), imageView, options, position, mScreenWidth / mColumnCount - 10
+                thumbnailCaches.get(mColumnCount - 2), imageView, options, position, thumbnailSizes.get(mColumnCount - 2)
         );
     }
 
