@@ -178,7 +178,7 @@ public class ImageListActivity extends AppCompatActivity
         final Intent i = new Intent(this, ImageDetailActivity.class);
         i.putExtra(ImageDetailActivity.POSITION, holder.position);
         ActivityOptions options = ActivityOptions.makeThumbnailScaleUpAnimation(
-                holder.mView, ((BitmapDrawable) holder.mImageView.getDrawable()).getBitmap(), 0, 0
+                holder.mImageView, ((BitmapDrawable) holder.mImageView.getDrawable()).getBitmap(), 0, 0
         );
         startActivity(i, options.toBundle());
     }

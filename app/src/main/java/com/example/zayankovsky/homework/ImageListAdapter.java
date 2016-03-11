@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 /**
  * {@link RecyclerView.Adapter} that can display an image and makes a call to the
@@ -29,6 +30,7 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.position = position;
         ImageWorker.loadThumbnail(position, holder.mImageView);
+        holder.mTextView.setText(String.valueOf(position + 1));
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -50,12 +52,14 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
         public final ImageView mImageView;
+        public final TextView mTextView;
         public int position;
 
         public ViewHolder(View view) {
             super(view);
             mView = view;
             mImageView = (ImageView) view.findViewById(R.id.image);
+            mTextView = (TextView) view.findViewById(R.id.text);
         }
     }
 }
