@@ -18,9 +18,11 @@ package com.example.zayankovsky.homework;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
@@ -85,10 +87,32 @@ public class ImageDetailFragment extends Fragment {
             ImageWorker.loadImage(position, mImageView);
         }
 
-        // Pass clicks on the ImageView to the parent activity to handle
-        if (OnClickListener.class.isInstance(getActivity())) {
-            mImageView.setOnClickListener((OnClickListener) getActivity());
-        }
+        // First we create the GestureListener that will include all our callbacks.
+        // Then we create the GestureDetector, which takes that listener as an argument.
+        GestureDetector.SimpleOnGestureListener gestureListener = new GestureListener();
+        final GestureDetector gd = new GestureDetector(getActivity(), gestureListener);
+
+        ScaleGestureDetector.SimpleOnScaleGestureListener scaleGestureListener = new ScaleGestureListener();
+        final ScaleGestureDetector sgd = new ScaleGestureDetector(getActivity(), scaleGestureListener);
+
+        /* For the view where gestures will occur, we create an onTouchListener that sends
+         * all motion events to the gesture detectors.  When the gesture detectors
+         * actually detects an event, it will use the callbacks we created in the
+         * SimpleOnGestureListener and SimpleOnScaleGestureListener to alert our application.
+        */
+
+        mImageView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                GestureListener.init(mImageView);
+                gd.onTouchEvent(motionEvent);
+
+                ScaleGestureListener.init(mImageView);
+                sgd.onTouchEvent(motionEvent);
+
+                return true;
+            }
+        });
     }
 
     @Override

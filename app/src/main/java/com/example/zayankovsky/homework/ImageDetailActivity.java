@@ -23,14 +23,13 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.WindowManager.LayoutParams;
 
-public class ImageDetailActivity extends FragmentActivity implements OnClickListener {
+public class ImageDetailActivity extends FragmentActivity {
     public static final String POSITION = "position";
-
-    private ViewPager mPager;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -43,10 +42,44 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
 
         // Set up ViewPager and backing adapter
         ImagePagerAdapter mAdapter = new ImagePagerAdapter(getSupportFragmentManager());
-        mPager = (ViewPager) findViewById(R.id.pager);
+        ViewPager mPager = (ViewPager) findViewById(R.id.pager);
         mPager.setAdapter(mAdapter);
         mPager.setPageMargin((int) getResources().getDimension(R.dimen.horizontal_page_margin));
         mPager.setOffscreenPageLimit(2);
+
+        final GestureDetector gd = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                // Up motion completing a single tap occurred.
+                finish();
+                return true;
+            }
+        });
+
+        mPager.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                gd.onTouchEvent(event);
+                return false;
+            }
+        });
+
+        mPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                GestureListener.reset();
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+            }
+        });
+
+        GestureListener.init(this, mPager);
 
         // Set up activity to go full screen
         getWindow().addFlags(LayoutParams.FLAG_FULLSCREEN);
@@ -77,20 +110,6 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
         @Override
         public Fragment getItem(int position) {
             return ImageDetailFragment.newInstance(position);
-        }
-    }
-
-    /**
-     * Set on the ImageView in the ViewPager children fragments, to enable/disable low profile mode
-     * when the ImageView is touched.
-     */
-    @Override
-    public void onClick(View v) {
-        final int vis = mPager.getSystemUiVisibility();
-        if ((vis & View.SYSTEM_UI_FLAG_LOW_PROFILE) != 0) {
-            mPager.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
-        } else {
-            mPager.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
         }
     }
 }
