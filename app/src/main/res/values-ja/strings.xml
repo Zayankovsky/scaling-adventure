@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings">設定</string>
+    <string name="fotki">Yandex.Images</string>
+    <string name="name">Vitaly Zayankovsky</string>
+    <string name="review">レビューを書く</string>
+    <string name="more">もっと</string>
+    <string name="pref_header_general">一般</string>
+    <string name="app_name">タスク1</string>
+    <string name="cache">キャッシュ</string>
+    <string name="gallery">ギャラリー</string>
+    <string name="imageview_description">画像サムネイル</string>
+    <string name="navigation_drawer_close">ナビゲーションドロワーを閉じます</string>
+    <string name="navigation_drawer_open">オープンナビゲーションドロワー</string>
+    <string name="pref_2_columns">2列</string>
+    <string name="pref_3_columns">3列</string>
+    <string name="pref_4_columns">4列</string>
+    <string name="pref_5_columns">5列</string>
+    <string name="pref_6_columns">6列</string>
+    <string name="pref_dark_theme">ダーク</string>
+    <string name="pref_light_theme">光</string>
+    <string name="pref_title_column_count">列カウント</string>
+    <string name="pref_title_theme">テーマ</string>
+</resources>

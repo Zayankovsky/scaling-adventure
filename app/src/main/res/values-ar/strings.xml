@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">المهمة رقم 1</string>
+    <string name="settings">الإعدادات</string>
+    <string name="fotki">Yandex.Images</string>
+    <string name="name">Vitaly Zayankovsky</string>
+    <string name="cache">مخبأ</string>
+    <string name="gallery">صالة عرض</string>
+    <string name="imageview_description">صورة مصغرة</string>
+    <string name="more">أكثر</string>
+    <string name="navigation_drawer_close">انهيار درج الملاحة</string>
+    <string name="navigation_drawer_open">فتح درج الملاحة</string>
+    <string name="pref_2_columns">2 الأعمدة</string>
+    <string name="pref_3_columns">3 أعمدة</string>
+    <string name="pref_4_columns">4 أعمدة</string>
+    <string name="pref_5_columns">5 أعمدة</string>
+    <string name="pref_dark_theme">ظلام</string>
+    <string name="pref_6_columns">6 أعمدة</string>
+    <string name="pref_header_general">عام</string>
+    <string name="pref_light_theme">ضوء</string>
+    <string name="pref_title_column_count">عدد الأعمدة</string>
+    <string name="pref_title_theme">موضوع</string>
+    <string name="review">التعليق</string>
+</resources>

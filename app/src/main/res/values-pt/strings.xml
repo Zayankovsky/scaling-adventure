@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings">Definições</string>
+    <string name="fotki">Yandex.Images</string>
+    <string name="name">Vitaly Zayankovsky</string>
+    <string name="review">Escrever uma crítica</string>
+    <string name="more">Mais</string>
+    <string name="pref_header_general">Geral</string>
+    <string name="app_name">Tarefa nº 1</string>
+    <string name="cache">Esconderijo</string>
+    <string name="gallery">Galeria</string>
+    <string name="navigation_drawer_close">Feche a gaveta de navegação</string>
+    <string name="imageview_description">Miniatura</string>
+    <string name="navigation_drawer_open">Gaveta de navegação aberta</string>
+    <string name="pref_2_columns">2 colunas</string>
+    <string name="pref_3_columns">3 colunas</string>
+    <string name="pref_4_columns">4 colunas</string>
+    <string name="pref_5_columns">5 colunas</string>
+    <string name="pref_6_columns">6 colunas</string>
+    <string name="pref_dark_theme">Escuro</string>
+    <string name="pref_light_theme">Leve</string>
+    <string name="pref_title_theme">Tema</string>
+    <string name="pref_title_column_count">Contagem de coluna</string>
+</resources>

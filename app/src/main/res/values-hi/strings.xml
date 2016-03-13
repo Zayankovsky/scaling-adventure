@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings">सेटिंग्स</string>
+    <string name="fotki">Yandex.Images</string>
+    <string name="name">Vitaly Zayankovsky</string>
+    <string name="more">अधिक</string>
+    <string name="app_name">कार्य 1</string>
+    <string name="pref_header_general">सामान्य</string>
+    <string name="cache">कैश</string>
+    <string name="gallery">गेलरी</string>
+    <string name="imageview_description">छवि थंबनेल</string>
+    <string name="navigation_drawer_close">बंद नेविगेशन दराज</string>
+    <string name="navigation_drawer_open">ओपन नेविगेशन दराज</string>
+    <string name="pref_2_columns">2 कॉलम</string>
+    <string name="pref_3_columns">3 कॉलम</string>
+    <string name="pref_4_columns">4 कॉलम</string>
+    <string name="pref_5_columns">5 कॉलम</string>
+    <string name="pref_6_columns">6 कॉलम</string>
+    <string name="pref_dark_theme">अंधेरा</string>
+    <string name="pref_light_theme">रोशनी</string>
+    <string name="pref_title_column_count">स्तंभ गिनती</string>
+    <string name="pref_title_theme">विषय</string>
+    <string name="review">एक समीक्षा लिखे</string>
+</resources>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">কার্যক্রম 1</string>
+    <string name="settings">সেটিংস</string>
+    <string name="fotki">Yandex.Images</string>
+    <string name="name">Vitaly Zayankovsky</string>
+    <string name="cache">ক্যাশে</string>
+    <string name="gallery">দরদালান</string>
+    <string name="imageview_description">চিত্র থাম্বনেল</string>
+    <string name="more">অধিক</string>
+    <string name="navigation_drawer_close">নেভিগেশান ড্রয়ার বন্ধ করুন</string>
+    <string name="navigation_drawer_open">নেভিগেশান ড্রয়ার খুলুন</string>
+    <string name="pref_2_columns">2 কলাম</string>
+    <string name="pref_3_columns">3 কলাম</string>
+    <string name="pref_4_columns">4 কলাম</string>
+    <string name="pref_5_columns">5 কলাম</string>
+    <string name="pref_6_columns">6 কলাম</string>
+    <string name="pref_dark_theme">অন্ধকার</string>
+    <string name="pref_header_general">সাধারণ</string>
+    <string name="pref_light_theme">আলো</string>
+    <string name="pref_title_column_count">কলাম গণনা</string>
+    <string name="pref_title_theme">বিষয়</string>
+    <string name="review">একটি পর্যালোচনা লিখুন</string>
+</resources>

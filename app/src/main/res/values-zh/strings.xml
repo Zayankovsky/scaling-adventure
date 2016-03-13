@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings">设置</string>
+    <string name="fotki">Yandex.Images</string>
+    <string name="name">Vitaly Zayankovsky</string>
+    <string name="review">我要评论</string>
+    <string name="more">更多</string>
+    <string name="app_name">任务1</string>
+    <string name="gallery">画廊</string>
+    <string name="cache">高速缓存</string>
+    <string name="imageview_description">图片缩略图</string>
+    <string name="navigation_drawer_close">关闭导览</string>
+    <string name="navigation_drawer_open">打开抽屉式导航栏</string>
+    <string name="pref_2_columns">2列</string>
+    <string name="pref_3_columns">3列</string>
+    <string name="pref_4_columns">4列</string>
+    <string name="pref_5_columns">5列</string>
+    <string name="pref_6_columns">6列</string>
+    <string name="pref_dark_theme">黑暗</string>
+    <string name="pref_header_general">一般</string>
+    <string name="pref_light_theme">光</string>
+    <string name="pref_title_column_count">列数</string>
+    <string name="pref_title_theme">主题</string>
+</resources>
