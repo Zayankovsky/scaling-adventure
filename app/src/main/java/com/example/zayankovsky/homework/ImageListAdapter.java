@@ -14,9 +14,11 @@ import android.widget.TextView;
 public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.ViewHolder> {
 
     private final ImageListFragment.OnImageListInteractionListener mListener;
+    private final int mSectionNumber;
 
-    public ImageListAdapter(ImageListFragment.OnImageListInteractionListener listener) {
+    public ImageListAdapter(ImageListFragment.OnImageListInteractionListener listener, int sectionNumber) {
         mListener = listener;
+        mSectionNumber = sectionNumber;
     }
 
     @Override
@@ -28,8 +30,13 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
+        holder.sectionNumber = mSectionNumber;
         holder.position = position;
-        ImageWorker.loadThumbnail(position, holder.mImageView);
+        if (mSectionNumber == 1) {
+            ImageWorker.loadYandexThumbnail(position, holder.mImageView);
+        } else {
+            ImageWorker.loadThumbnail(position, holder.mImageView);
+        }
         holder.mTextView.setText(String.valueOf(position + 1));
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
@@ -46,13 +53,18 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
 
     @Override
     public int getItemCount() {
-        return Integer.MAX_VALUE;
+        if (mSectionNumber == 1) {
+            return ImageWorker.getNumberOfUrls();
+        } else {
+            return Integer.MAX_VALUE;
+        }
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
         public final ImageView mImageView;
         public final TextView mTextView;
+        public int sectionNumber;
         public int position;
 
         public ViewHolder(View view) {

@@ -16,20 +16,22 @@
 
 package com.example.zayankovsky.homework;
 
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.view.ViewPager;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.WindowManager.LayoutParams;
+import android.widget.ImageView;
 
 public class ImageDetailActivity extends FragmentActivity {
+    public static final String SECTION_NUMBER = "section_number";
     public static final String POSITION = "position";
+    public static final String THUMBNAIL_BITMAP = "thumbnail_bitmap";
+    private ImageView mImageView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -40,76 +42,55 @@ public class ImageDetailActivity extends FragmentActivity {
                         R.color.darkColorTransparent : R.color.lightColorTransparent
         );
 
-        // Set up ViewPager and backing adapter
-        ImagePagerAdapter mAdapter = new ImagePagerAdapter(getSupportFragmentManager());
-        ViewPager mPager = (ViewPager) findViewById(R.id.pager);
-        mPager.setAdapter(mAdapter);
-        mPager.setPageMargin((int) getResources().getDimension(R.dimen.horizontal_page_margin));
-        mPager.setOffscreenPageLimit(2);
-
-        final GestureDetector gd = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
-            @Override
-            public boolean onSingleTapUp(MotionEvent e) {
-                // Up motion completing a single tap occurred.
-                finish();
-                return true;
-            }
-        });
-
-        mPager.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                gd.onTouchEvent(event);
-                return false;
-            }
-        });
-
-        mPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-            }
-
-            @Override
-            public void onPageSelected(int position) {
-                GestureListener.reset();
-            }
-
-            @Override
-            public void onPageScrollStateChanged(int state) {
-            }
-        });
-
-        GestureListener.init(this, mPager);
-
         // Set up activity to go full screen
         getWindow().addFlags(LayoutParams.FLAG_FULLSCREEN);
 
-        // Set the current item based on the extra passed in to this activity
-        final int position = getIntent().getIntExtra(POSITION, -1);
-        if (position != -1) {
-            mPager.setCurrentItem(position);
+        // Locate the main ImageView
+        mImageView = (ImageView) findViewById(R.id.imageView);
+
+        GestureListener.init(this, mImageView);
+        ScaleGestureListener.init(mImageView);
+
+        // Use the ImageWorker to load the image into the ImageView
+        // (so a single cache can be used over all pages in the ViewPager)
+        // based on the extra passed in to this activity
+        int position = getIntent().getIntExtra(POSITION, 0);
+        if (getIntent().getIntExtra(SECTION_NUMBER, 0) == 1 && ImageWorker.getNumberOfUrls() > 0) {
+            mImageView.setImageBitmap((Bitmap) getIntent().getParcelableExtra(THUMBNAIL_BITMAP));
+            ImageWorker.loadYandexImage(position, mImageView);
+        } else {
+            ImageWorker.loadImage(position, mImageView);
         }
+
+        // First we create the GestureListener that will include all our callbacks.
+        // Then we create the GestureDetector, which takes that listener as an argument.
+        GestureDetector.SimpleOnGestureListener gestureListener = new GestureListener();
+        final GestureDetector gd = new GestureDetector(this, gestureListener);
+
+        ScaleGestureDetector.SimpleOnScaleGestureListener scaleGestureListener = new ScaleGestureListener();
+        final ScaleGestureDetector sgd = new ScaleGestureDetector(this, scaleGestureListener);
+
+        /* For the view where gestures will occur, we create an onTouchListener that sends
+         * all motion events to the gesture detectors.  When the gesture detectors
+         * actually detects an event, it will use the callbacks we created in the
+         * SimpleOnGestureListener and SimpleOnScaleGestureListener to alert our application.
+        */
+
+        findViewById(R.id.frameLayout).setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                gd.onTouchEvent(motionEvent);
+                sgd.onTouchEvent(motionEvent);
+                return true;
+            }
+        });
     }
 
-    /**
-     * The main adapter that backs the ViewPager. A subclass of FragmentStatePagerAdapter as there
-     * could be a large number of items in the ViewPager and we don't want to retain them all in
-     * memory at once but create/destroy them on the fly.
-     */
-    private class ImagePagerAdapter extends FragmentStatePagerAdapter {
-
-        public ImagePagerAdapter(FragmentManager fm) {
-            super(fm);
-        }
-
-        @Override
-        public int getCount() {
-            return Integer.MAX_VALUE;
-        }
-
-        @Override
-        public Fragment getItem(int position) {
-            return ImageDetailFragment.newInstance(position);
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mImageView != null) {
+            mImageView.setImageDrawable(null);
         }
     }
 }

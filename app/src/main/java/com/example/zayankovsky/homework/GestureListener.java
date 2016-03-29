@@ -17,7 +17,8 @@
 package com.example.zayankovsky.homework;
 
 import android.app.Activity;
-import android.support.v4.view.ViewPager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -26,39 +27,40 @@ import android.widget.ImageView;
 public class GestureListener extends GestureDetector.SimpleOnGestureListener {
 
     private static Activity mActivity;
-    private static ViewPager mPager;
     private static ImageView mImageView;
     private static float mMidX, mMidY, mLeft, mRight, mTop, mBottom;
 
     private static void updateImageCoordinates() {
-        mMidX = mImageView.getWidth() / 2.f;
-        mMidY = mImageView.getHeight() / 2.f;
-        float halfSize = Math.min(mMidX, mMidY);
+        mMidX = (mImageView.getLeft() + mImageView.getRight()) / 2.f + mImageView.getTranslationX();
+        mMidY = (mImageView.getTop() + mImageView.getBottom()) / 2.f + mImageView.getTranslationY();
 
-        mLeft = mMidX - halfSize;
-        mRight = mMidX + halfSize;
+        float halfWidth = (mImageView.getRight() - mImageView.getLeft()) / 2.f * mImageView.getScaleX();
+        float halfHeight = (mImageView.getBottom() - mImageView.getTop()) / 2.f * mImageView.getScaleY();
+        float realHalfHeight;
 
-        mTop = mMidY - halfSize;
-        mBottom = mMidY + halfSize;
-    }
-
-    public static void init(Activity activity, ViewPager pager) {
-        mActivity = activity;
-        mPager = pager;
-    }
-
-    public static void init(ImageView imageView) {
-        mImageView = imageView;
-    }
-
-    public static void reset() {
-        if (mImageView != null) {
-            mImageView.setScaleX(1);
-            mImageView.setScaleY(1);
-
-            mImageView.setTranslationX(0);
-            mImageView.setTranslationY(0);
+        BitmapDrawable drawable = (BitmapDrawable) mImageView.getDrawable();
+        if (drawable != null) {
+            Bitmap bitmap = drawable.getBitmap();
+            if ((realHalfHeight = halfWidth * bitmap.getHeight() / bitmap.getWidth()) > halfHeight) {
+                halfWidth = halfHeight * bitmap.getWidth() / bitmap.getHeight();
+            } else {
+                halfHeight = realHalfHeight;
+            }
+        } else {
+            halfHeight = 0;
+            halfWidth = 0;
         }
+
+        mLeft = mMidX - halfWidth;
+        mRight = mMidX + halfWidth;
+
+        mTop = mMidY - halfHeight;
+        mBottom = mMidY + halfHeight;
+    }
+
+    public static void init(Activity activity, ImageView imageView) {
+        mActivity = activity;
+        mImageView = imageView;
     }
 
     @Override
@@ -71,6 +73,15 @@ public class GestureListener extends GestureDetector.SimpleOnGestureListener {
         if (x < mLeft || mRight < x || y < mTop || mBottom < y) {
             mActivity.finish();
         }
+
+        return true;
+    }
+
+    @Override
+    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+        // User attempted to scroll
+        mImageView.setTranslationX(mImageView.getTranslationX() - distanceX);
+        mImageView.setTranslationY(mImageView.getTranslationY() - distanceY);
         return true;
     }
 
@@ -87,10 +98,10 @@ public class GestureListener extends GestureDetector.SimpleOnGestureListener {
         updateImageCoordinates();
 
         if (mLeft <= x && x <= mRight && mTop <= y && y <= mBottom) {
-            if ((mPager.getSystemUiVisibility() & View.SYSTEM_UI_FLAG_LOW_PROFILE) != 0) {
-                mPager.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+            if ((mImageView.getSystemUiVisibility() & View.SYSTEM_UI_FLAG_LOW_PROFILE) != 0) {
+                mImageView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
             } else {
-                mPager.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
+                mImageView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
             }
         }
         return true;

@@ -19,11 +19,19 @@ package com.example.zayankovsky.homework;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.util.SparseArray;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.widget.ImageView;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.SortedMap;
 
 /**
  * This class wraps up completing some arbitrary work when loading a bitmap to an ImageView.
@@ -32,19 +40,20 @@ import java.util.Collections;
 public class ImageWorker {
 
     private static Resources mResources;
+    private static ConnectivityManager mConnMgr;
     private static int mScreenDensity;
     private static int mColumnCount;
+    private static int mImageWidth;
+    private static int mThumbnailWidth;
 
-    private static int[] imageIds = {
+    private static Bitmap emptyPhoto;
+
+    private static final int[] imageIds = {
             R.drawable.image_1, R.drawable.image_2, R.drawable.image_3,
             R.drawable.image_4, R.drawable.image_5, R.drawable.image_6,
     };
 
-    private static ArrayList<Integer> thumbnailSizes = new ArrayList<>(5);
-    private static ArrayList<SparseArray<Bitmap>> thumbnailCaches = new ArrayList<>(5);
-    private static SparseArray<Bitmap> imageCache = new SparseArray<>();
-    private static ArrayList<Integer> randomizer = new ArrayList<>(720);
-
+    private static List<Integer> randomizer = new ArrayList<>(720);
     private static int[] indexes = {0, 1, 2, 3, 4, 5};
 
     private static void permute(int start) {
@@ -68,39 +77,50 @@ public class ImageWorker {
         }
     }
 
-    static {
-        for (int i = 0; i < 5; ++i) {
-            thumbnailSizes.add(0);
-            thumbnailCaches.add(new SparseArray<Bitmap>());
-        }
+    private static List<SortedMap<Integer, String>> imageUrls = new ArrayList<>();
 
+    static {
         permute(0);
         Collections.shuffle(randomizer);
     }
 
-    public static void init(Resources resources, int screenWidth, int screenDensity, int columnCount) {
+    public static void init(Resources resources, ConnectivityManager connMgr,
+                            int screenWidth, int screenDensity, int columnCount) {
         mResources = resources;
+        mConnMgr = connMgr;
         mScreenDensity = screenDensity;
         mColumnCount = columnCount;
+        mImageWidth = screenWidth;
+        mThumbnailWidth = screenWidth / mColumnCount - 10;
 
-        int size = screenWidth / mColumnCount - 10;
-        if (!thumbnailSizes.get(mColumnCount - 2).equals(size)) {
-            thumbnailSizes.set(mColumnCount - 2, size);
-            thumbnailCaches.get(mColumnCount - 2).clear();
-        }
+        emptyPhoto = BitmapFactory.decodeResource(mResources, R.drawable.empty_photo);
+        emptyPhoto = Bitmap.createScaledBitmap(
+                emptyPhoto, mThumbnailWidth, emptyPhoto.getHeight() * mThumbnailWidth / emptyPhoto.getWidth(), false
+            );
+    }
+
+    public static void init(List<SortedMap<Integer, String>> imageUrls) {
+        ImageWorker.imageUrls = imageUrls;
+    }
+
+    public static int getNumberOfUrls() {
+        return imageUrls.size();
     }
 
     public static void loadThumbnail(int position, ImageView imageView) {
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = 2 + (mColumnCount < 4 ? 0 : 2);
-
-        getFromCacheOrResources(
-                thumbnailCaches.get(mColumnCount - 2), imageView, options, position, thumbnailSizes.get(mColumnCount - 2)
-        );
+        getFromCacheOrResources("thumbnails/" + mThumbnailWidth + "/", position, imageView, true);
     }
 
     public static void loadImage(int position, ImageView imageView) {
-        getFromCacheOrResources(imageCache, imageView, new BitmapFactory.Options(), position, 0);
+        getFromCacheOrResources("images/", position, imageView, false);
+    }
+
+    public static void loadYandexThumbnail(int position, ImageView imageView) {
+        getFromCacheOrDownload("yandex/thumbnails/" + mThumbnailWidth + "/", position, imageView, true);
+    }
+
+    public static void loadYandexImage(int position, ImageView imageView) {
+        getFromCacheOrDownload("yandex/images/", position, imageView, false);
     }
 
     /**
@@ -110,25 +130,139 @@ public class ImageWorker {
      *
      * @param position The position of the ImageView to bind the image to.
      */
-    private static void getFromCacheOrResources(SparseArray<Bitmap> cache, ImageView imageView,
-                                                BitmapFactory.Options options, int position, int size) {
+    private static void getFromCacheOrResources(String prefix, int position, ImageView imageView, boolean isThumbnail) {
         int permutation = randomizer.get(position / mColumnCount % 720);
         for (int i = 0; i < position % mColumnCount; ++i) {
             permutation /= 6;
         }
-        int imageId = imageIds[permutation % 6];
-        Bitmap value = cache.get(imageId);
+        int index = permutation % 6;
+        String data = prefix + index;
+        Bitmap value = ImageCache.getBitmapFromMemoryCache(data);
 
         if (value == null) {
+            BitmapFactory.Options options = new BitmapFactory.Options();
             options.inDensity = mScreenDensity;
             options.inScaled = false;
-            value = BitmapFactory.decodeResource(mResources, imageId, options);
-            if (size != 0) {
-                value = Bitmap.createScaledBitmap(value, size, size, false);
+            value = BitmapFactory.decodeResource(mResources, imageIds[index], options);
+            if (isThumbnail) {
+                value = Bitmap.createScaledBitmap(
+                        value, mThumbnailWidth, value.getHeight() * mThumbnailWidth / value.getWidth(), false
+                );
             }
-            cache.put(imageId, value);
+            ImageCache.addBitmapToCache(data, value);
         }
 
         imageView.setImageBitmap(value);
+    }
+
+    private static void getFromCacheOrDownload(String prefix, int position, ImageView imageView, boolean isThumbnail) {
+        int width = isThumbnail ? mThumbnailWidth : mImageWidth;
+        SortedMap<Integer, String> image = imageUrls.get(position % imageUrls.size());
+        String url = image.get(image.lastKey());
+
+        for (SortedMap.Entry<Integer, String> entry : image.entrySet()) {
+            if (entry.getKey() > width) {
+                url = entry.getValue();
+                break;
+            }
+        }
+
+        String data = prefix + url;
+        Bitmap value = ImageCache.getBitmapFromMemoryCache(data);
+
+        if (value != null) {
+            // Bitmap found in memory cache
+            imageView.setImageBitmap(value);
+        } else {
+            if (isThumbnail) {
+                imageView.setImageBitmap(emptyPhoto);
+            }
+            NetworkInfo networkInfo = mConnMgr.getActiveNetworkInfo();
+            if (networkInfo != null && networkInfo.isConnected()) {
+                new BitmapWorkerTask(data, url, isThumbnail, imageView).execute();
+            }
+        }
+    }
+
+    /**
+     * The actual AsyncTask that will asynchronously download the image.
+     */
+    private static class BitmapWorkerTask extends AsyncTask<Void, Void, Bitmap> {
+        private final String data;
+        private final String url;
+        private final boolean isThumbnail;
+        private final ImageView imageView;
+
+        public BitmapWorkerTask(String data, String url, boolean isThumbnail, ImageView imageView) {
+            this.data = data;
+            this.url = url;
+            this.isThumbnail = isThumbnail;
+            this.imageView = imageView;
+        }
+
+        /**
+         * Background processing.
+         */
+        @Override
+        protected Bitmap doInBackground(Void... params) {
+            try {
+                // Try and fetch the bitmap from the cache
+                Bitmap bitmap = ImageCache.getBitmapFromDiskCache(data);
+
+                // If the bitmap was not found in the cache, then call the downloadBitmap method
+                if (bitmap == null) {
+                    bitmap = downloadBitmap();
+                }
+
+                // If the bitmap was downloaded, then add the downloaded
+                // bitmap to the cache for future use.
+                if (bitmap != null) {
+                    if (isThumbnail) {
+                        bitmap = Bitmap.createScaledBitmap(
+                                bitmap, mThumbnailWidth, bitmap.getHeight() * mThumbnailWidth / bitmap.getWidth(), false
+                        );
+                    }
+                    ImageCache.addBitmapToCache(data, bitmap);
+                }
+
+                return bitmap;
+            } catch (IOException e) {
+                return null;
+            }
+        }
+
+        /**
+         * Once the image is processed, associates it to the imageView
+         */
+        @Override
+        protected void onPostExecute(Bitmap value) {
+            imageView.setImageBitmap(value);
+        }
+
+        // Given a URL, establishes an HttpUrlConnection and retrieves
+        // an image as a InputStream, which it returns as a bitmap.
+        private Bitmap downloadBitmap() throws IOException {
+            InputStream is = null;
+            try {
+                HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+                conn.setReadTimeout(10000 /* milliseconds */);
+                conn.setConnectTimeout(15000 /* milliseconds */);
+                conn.setRequestMethod("GET");
+                conn.setDoInput(true);
+                // Starts the query
+                conn.connect();
+                is = conn.getInputStream();
+
+                // Convert the InputStream into a bitmap
+                return BitmapFactory.decodeStream(is);
+
+                // Makes sure that the InputStream is closed after the app is
+                // finished using it.
+            } finally {
+                if (is != null) {
+                    is.close();
+                }
+            }
+        }
     }
 }
