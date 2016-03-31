@@ -22,8 +22,6 @@
     <!-- Strings related to Settings -->
 
     <!-- Example General settings -->
-    <string name="pref_header_general">Основные</string>
-
     <string name="pref_title_theme">Тема оформления</string>
     <string name="pref_light_theme">Светлая тема</string>
     <string name="pref_dark_theme">Тёмная тема</string>
@@ -40,8 +38,8 @@
     <string name="pref_2_columns">2 столбца</string>
     <string name="pref_3_columns">3 столбца</string>
     <string name="pref_4_columns">4 столбца</string>
-    <string name="pref_5_columns">5 столбца</string>
-    <string name="pref_6_columns">6 столбца</string>
+    <string name="pref_5_columns">5 столбцов</string>
+    <string name="pref_6_columns">6 столбцов</string>
     <string-array name="pref_column_count_titles">
         <item>@string/pref_2_columns</item>
         <item>@string/pref_3_columns</item>
@@ -56,4 +54,77 @@
         <item>5</item>
         <item>6</item>
     </string-array>
+
+    <string name="pref_title_memory_cache_size">Размер кэш-памяти</string>
+    <string name="pref_0_mb" translatable="false">0 MB</string>
+    <string name="pref_5_mb" translatable="false">5 MB</string>
+    <string name="pref_10_mb" translatable="false">10 MB</string>
+    <string name="pref_15_mb" translatable="false">15 MB</string>
+    <string name="pref_20_mb" translatable="false">20 MB</string>
+    <string name="pref_25_mb" translatable="false">25 MB</string>
+    <string name="pref_30_mb" translatable="false">30 MB</string>
+    <string name="pref_35_mb" translatable="false">35 MB</string>
+    <string name="pref_40_mb" translatable="false">40 MB</string>
+    <string name="pref_45_mb" translatable="false">45 MB</string>
+    <string name="pref_50_mb" translatable="false">50 MB</string>
+    <string name="pref_55_mb" translatable="false">55 MB</string>
+    <string name="pref_60_mb" translatable="false">60 MB</string>
+    <string name="pref_65_mb" translatable="false">65 MB</string>
+    <string name="pref_70_mb" translatable="false">70 MB</string>
+    <string name="pref_75_mb" translatable="false">75 MB</string>
+    <string name="pref_80_mb" translatable="false">80 MB</string>
+    <string name="pref_85_mb" translatable="false">85 MB</string>
+    <string name="pref_90_mb" translatable="false">90 MB</string>
+    <string name="pref_95_mb" translatable="false">95 MB</string>
+    <string name="pref_100_mb" translatable="false">100 MB</string>
+    <string-array name="pref_memory_cache_size_titles">
+        <item>@string/pref_0_mb</item>
+        <item>@string/pref_5_mb</item>
+        <item>@string/pref_10_mb</item>
+        <item>@string/pref_15_mb</item>
+        <item>@string/pref_20_mb</item>
+        <item>@string/pref_25_mb</item>
+        <item>@string/pref_30_mb</item>
+        <item>@string/pref_35_mb</item>
+        <item>@string/pref_40_mb</item>
+        <item>@string/pref_45_mb</item>
+        <item>@string/pref_50_mb</item>
+        <item>@string/pref_55_mb</item>
+        <item>@string/pref_60_mb</item>
+        <item>@string/pref_65_mb</item>
+        <item>@string/pref_70_mb</item>
+        <item>@string/pref_75_mb</item>
+        <item>@string/pref_80_mb</item>
+        <item>@string/pref_85_mb</item>
+        <item>@string/pref_90_mb</item>
+        <item>@string/pref_95_mb</item>
+        <item>@string/pref_100_mb</item>
+    </string-array>
+    <string-array name="pref_memory_cache_size_values">
+        <item>0</item>
+        <item>5</item>
+        <item>10</item>
+        <item>15</item>
+        <item>20</item>
+        <item>25</item>
+        <item>30</item>
+        <item>35</item>
+        <item>40</item>
+        <item>45</item>
+        <item>50</item>
+        <item>55</item>
+        <item>60</item>
+        <item>65</item>
+        <item>70</item>
+        <item>75</item>
+        <item>80</item>
+        <item>85</item>
+        <item>90</item>
+        <item>95</item>
+        <item>100</item>
+    </string-array>
+
+    <string name="pref_description_keep_disk_cache">Дисковый кэш не будет удаляться при старте приложения</string>
+    <string name="pref_description_clear_disk_cache">Дисковый кэш будет удаляться при старте приложения</string>
+    <string name="pref_title_clear_disk_cache">Удаление дискового кэша</string>
 </resources>

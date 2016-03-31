@@ -18,7 +18,10 @@
     <string name="pref_title_theme">Tema</string>
     <string name="pref_dark_theme">Oscuro</string>
     <string name="pref_light_theme">Ligero</string>
-    <string name="pref_header_general">General</string>
     <string name="settings">Ajustes</string>
     <string name="review">Escribir una reseña</string>
+    <string name="pref_title_memory_cache_size">El tamaño de la memoria caché</string>
+    <string name="pref_title_clear_disk_cache">Caché de disco clara</string>
+    <string name="pref_description_clear_disk_cache">Caché de disco se borrará en el arranque de aplicaciones</string>
+    <string name="pref_description_keep_disk_cache">Caché de disco no se borrará en el arranque de aplicaciones</string>
 </resources>

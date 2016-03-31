@@ -16,7 +16,6 @@
 
 package com.example.zayankovsky.homework;
 
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
@@ -30,7 +29,6 @@ import android.widget.ImageView;
 public class ImageDetailActivity extends FragmentActivity {
     public static final String SECTION_NUMBER = "section_number";
     public static final String POSITION = "position";
-    public static final String THUMBNAIL_BITMAP = "thumbnail_bitmap";
     private ImageView mImageView;
 
     @Override
@@ -56,7 +54,6 @@ public class ImageDetailActivity extends FragmentActivity {
         // based on the extra passed in to this activity
         int position = getIntent().getIntExtra(POSITION, 0);
         if (getIntent().getIntExtra(SECTION_NUMBER, 0) == 1 && ImageWorker.getNumberOfUrls() > 0) {
-            mImageView.setImageBitmap((Bitmap) getIntent().getParcelableExtra(THUMBNAIL_BITMAP));
             ImageWorker.loadYandexImage(position, mImageView);
         } else {
             ImageWorker.loadImage(position, mImageView);

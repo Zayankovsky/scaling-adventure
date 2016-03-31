@@ -16,9 +16,12 @@
     <string name="pref_5_columns">5 কলাম</string>
     <string name="pref_6_columns">6 কলাম</string>
     <string name="pref_dark_theme">অন্ধকার</string>
-    <string name="pref_header_general">সাধারণ</string>
     <string name="pref_light_theme">আলো</string>
     <string name="pref_title_column_count">কলাম গণনা</string>
     <string name="pref_title_theme">বিষয়</string>
     <string name="review">একটি পর্যালোচনা লিখুন</string>
+    <string name="pref_title_memory_cache_size">মেমরি ক্যাশে মাপ</string>
+    <string name="pref_title_clear_disk_cache">স্পষ্ট ডিস্ক ক্যাশে</string>
+    <string name="pref_description_keep_disk_cache">ডিস্ক ক্যাশে অ্যাপ্লিকেশন সূচনা উপর সাফ করা হবে না</string>
+    <string name="pref_description_clear_disk_cache">ডিস্ক ক্যাশে অ্যাপ্লিকেশন স্টার্ট সাফ করা হবে</string>
 </resources>

@@ -17,8 +17,11 @@
     <string name="pref_5_columns">5列</string>
     <string name="pref_6_columns">6列</string>
     <string name="pref_dark_theme">黑暗</string>
-    <string name="pref_header_general">一般</string>
     <string name="pref_light_theme">光</string>
     <string name="pref_title_column_count">列数</string>
     <string name="pref_title_theme">主题</string>
+    <string name="pref_title_memory_cache_size">内存缓存大小</string>
+    <string name="pref_title_clear_disk_cache">清除磁盘高速缓存</string>
+    <string name="pref_description_clear_disk_cache">磁盘缓存将在应用程序启动被清除</string>
+    <string name="pref_description_keep_disk_cache">磁盘缓存将无法在应用开始被清除</string>
 </resources>

@@ -5,7 +5,6 @@
     <string name="name">Vitaly Zayankovsky</string>
     <string name="review">Escrever uma crítica</string>
     <string name="more">Mais</string>
-    <string name="pref_header_general">Geral</string>
     <string name="app_name">Tarefa nº 1</string>
     <string name="cache">Esconderijo</string>
     <string name="gallery">Galeria</string>
@@ -21,4 +20,8 @@
     <string name="pref_light_theme">Leve</string>
     <string name="pref_title_theme">Tema</string>
     <string name="pref_title_column_count">Contagem de coluna</string>
+    <string name="pref_title_memory_cache_size">Tamanho do cache de memória</string>
+    <string name="pref_title_clear_disk_cache">Cache de disco clara</string>
+    <string name="pref_description_keep_disk_cache">Cache de disco não será apagada na partida app</string>
+    <string name="pref_description_clear_disk_cache">Cache de disco será apagado na partida app</string>
 </resources>

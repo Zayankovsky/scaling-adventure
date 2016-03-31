@@ -137,7 +137,10 @@ public class ImageListActivity extends AppCompatActivity
         }
 
         ImageWorker.init(getResources(), connMgr, displayMetrics.widthPixels, displayMetrics.densityDpi, columnCount);
-        ImageCache.init(this);
+        ImageCache.init(
+                this, Integer.parseInt(sharedPref.getString("memory_cache_size", "50")) * 1024,
+                sharedPref.getBoolean("clear_disk_cache", false)
+        );
     }
 
     @Override
@@ -208,7 +211,7 @@ public class ImageListActivity extends AppCompatActivity
         i.putExtra(ImageDetailActivity.POSITION, holder.position);
         BitmapDrawable drawable = (BitmapDrawable) holder.mImageView.getDrawable();
         if (drawable != null) {
-            i.putExtra(ImageDetailActivity.THUMBNAIL_BITMAP, drawable.getBitmap());
+            ImageWorker.init(drawable.getBitmap());
             ActivityOptions options = ActivityOptions.makeThumbnailScaleUpAnimation(
                     holder.mImageView, drawable.getBitmap(), 0, 0
             );
@@ -284,7 +287,9 @@ public class ImageListActivity extends AppCompatActivity
         @Override
         protected void onPostExecute(List<SortedMap<Integer, String>> result) {
             ImageWorker.init(result);
-            mViewPager.getAdapter().notifyDataSetChanged();
+            if (!isDestroyed()) {
+                mViewPager.getAdapter().notifyDataSetChanged();
+            }
         }
     }
 

@@ -19,6 +19,7 @@ package com.example.zayankovsky.homework;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.util.LruCache;
 
@@ -33,11 +34,14 @@ import java.security.NoSuchAlgorithmException;
 
 /**
  * This class handles disk and memory caching of bitmaps in conjunction with the
- * {@link ImageWorker} class and its subclasses.
+ * {@link ImageWorker} class.
  */
 public class ImageCache {
-    // Default disk cache size in bytes
-    private static final int DISK_CACHE_SIZE = 1024 * 1024 * 200; // 200MB
+    // Maximum memory cache size in kilobytes
+    private static final int MAX_MEMORY_CACHE_SIZE = Math.round(0.8f * Runtime.getRuntime().maxMemory() / 1024);
+
+    // Disk cache size in bytes
+    private static final long DISK_CACHE_SIZE = 1024 * 1024 * 200; // 200MB
 
     private static LruCache<String, Bitmap> mMemoryCache;
     private static DiskLruCache mDiskLruCache;
@@ -49,13 +53,13 @@ public class ImageCache {
      *
      * @param context A context to use.
      */
-    public static void init(Context context) {
+    public static void init(Context context, int memoryCacheSize, boolean clearDiskCache) {
         // Set up memory cache
-        mMemoryCache = new LruCache<String, Bitmap>(Math.round(0.5f * Runtime.getRuntime().maxMemory() / 1024)) {
+        mMemoryCache = new LruCache<String, Bitmap>(Math.min(memoryCacheSize, MAX_MEMORY_CACHE_SIZE)) {
 
             /**
-             * Measure item size in kilobytes rather than units which is more practical
-             * for a bitmap cache
+             * Measure item size in kilobytes rather than units
+             * which is more practical for a bitmap cache
              */
             @Override
             protected int sizeOf(String key, Bitmap value) {
@@ -65,42 +69,35 @@ public class ImageCache {
         };
 
         // Set up disk cache
-        File diskCacheDir = getDiskCacheDir(context, "cache");
-        synchronized (mDiskCacheLock) {
-            if (mDiskLruCache == null || mDiskLruCache.isClosed()) {
-                if (diskCacheDir != null) {
-                    if (!diskCacheDir.exists()) {
-                        diskCacheDir.mkdirs();
-                    }
-                    if (diskCacheDir.getUsableSpace() > DISK_CACHE_SIZE) {
-                        try {
-                            mDiskLruCache = DiskLruCache.open(diskCacheDir, DISK_CACHE_SIZE);
-                        } catch (final IOException ignored) {}
-                    }
-                }
-            }
-            mDiskCacheStarting = false;
-            mDiskCacheLock.notifyAll();
-        }
+        new InitDiskCacheTask(context, clearDiskCache).execute();
     }
 
     /**
-     * Adds a bitmap to both memory and disk cache.
+     * Adds a bitmap to memory cache.
      * @param data Unique identifier for the bitmap to store
      * @param value The bitmap drawable to store
      */
-    public static void addBitmapToCache(String data, Bitmap value) {
+    public static void addBitmapToMemoryCache(String data, Bitmap value) {
         if (data == null || value == null) {
             return;
         }
 
-        // Add to memory cache
         if (mMemoryCache != null) {
             mMemoryCache.put(data, value);
         }
+    }
+
+    /**
+     * Adds a bitmap to disk cache.
+     * @param data Unique identifier for the bitmap to store
+     * @param value The bitmap drawable to store
+     */
+    public static void addBitmapToDiskCache(String data, Bitmap value) {
+        if (data == null || value == null) {
+            return;
+        }
 
         synchronized (mDiskCacheLock) {
-            // Add to disk cache
             if (mDiskLruCache != null) {
                 final String key = hashKeyForDisk(data);
                 OutputStream out = null;
@@ -230,4 +227,47 @@ public class ImageCache {
         return sb.toString();
     }
 
+    /**
+     * Initializes the disk cache. Note that this includes disk access
+     * so this is executed on a background thread.
+     */
+    private static class InitDiskCacheTask extends AsyncTask<Void, Void, Void> {
+        private final Context context;
+        private final boolean clearDiskCache;
+
+        public InitDiskCacheTask(Context context, boolean clearDiskCache) {
+            this.context = context;
+            this.clearDiskCache = clearDiskCache;
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            synchronized (mDiskCacheLock) {
+                mDiskCacheStarting = true;
+                if (clearDiskCache && mDiskLruCache != null && !mDiskLruCache.isClosed()) {
+                    try {
+                        mDiskLruCache.delete();
+                    } catch (IOException ignored) {}
+                    mDiskLruCache = null;
+                }
+
+                File diskCacheDir = getDiskCacheDir(context, "cache");
+                if (mDiskLruCache == null || mDiskLruCache.isClosed()) {
+                    if (diskCacheDir != null) {
+                        if (!diskCacheDir.exists()) {
+                            diskCacheDir.mkdirs();
+                        }
+                        try {
+                            mDiskLruCache = DiskLruCache.open(
+                                    diskCacheDir, Math.min(DISK_CACHE_SIZE, Math.round(0.8 * diskCacheDir.getUsableSpace()))
+                            );
+                        } catch (final IOException ignored) {}
+                    }
+                }
+                mDiskCacheStarting = false;
+                mDiskCacheLock.notifyAll();
+            }
+            return null;
+        }
+    }
 }

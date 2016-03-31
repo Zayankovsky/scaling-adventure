@@ -15,10 +15,13 @@
     <string name="pref_5_columns">5 עמודות</string>
     <string name="pref_6_columns">6 עמודים</string>
     <string name="pref_dark_theme">כֵּהֶה</string>
-    <string name="pref_header_general">כללי</string>
     <string name="pref_light_theme">אוֹר</string>
     <string name="pref_title_column_count">ספירת עמודות</string>
     <string name="pref_title_theme">נושא</string>
     <string name="review">כתוב ביקורת</string>
     <string name="settings">הגדרות</string>
+    <string name="pref_title_memory_cache_size">גודל זיכרון המטמון</string>
+    <string name="pref_title_clear_disk_cache">מטמון דיסק ברור</string>
+    <string name="pref_description_keep_disk_cache">מטמון דיסק לא ינוקה על תחילת יישום</string>
+    <string name="pref_description_clear_disk_cache">מטמון דיסק ינוקה בטעינת תחילת יישום</string>
 </resources>

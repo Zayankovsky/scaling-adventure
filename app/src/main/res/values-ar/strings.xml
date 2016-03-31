@@ -16,9 +16,12 @@
     <string name="pref_5_columns">5 أعمدة</string>
     <string name="pref_dark_theme">ظلام</string>
     <string name="pref_6_columns">6 أعمدة</string>
-    <string name="pref_header_general">عام</string>
     <string name="pref_light_theme">ضوء</string>
     <string name="pref_title_column_count">عدد الأعمدة</string>
     <string name="pref_title_theme">موضوع</string>
     <string name="review">التعليق</string>
+    <string name="pref_title_memory_cache_size">حجم ذاكرة التخزين المؤقت</string>
+    <string name="pref_title_clear_disk_cache">التخزين المؤقت على القرص واضح</string>
+    <string name="pref_description_clear_disk_cache">سيتم مسح التخزين المؤقت على القرص على بدء التطبيق</string>
+    <string name="pref_description_keep_disk_cache">لن يتم مسح ذاكرة التخزين المؤقت القرص على بدء التطبيق</string>
 </resources>

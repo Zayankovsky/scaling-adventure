@@ -5,7 +5,6 @@
     <string name="name">Vitaly Zayankovsky</string>
     <string name="more">अधिक</string>
     <string name="app_name">कार्य 1</string>
-    <string name="pref_header_general">सामान्य</string>
     <string name="cache">कैश</string>
     <string name="gallery">गेलरी</string>
     <string name="imageview_description">छवि थंबनेल</string>
@@ -21,4 +20,8 @@
     <string name="pref_title_column_count">स्तंभ गिनती</string>
     <string name="pref_title_theme">विषय</string>
     <string name="review">एक समीक्षा लिखे</string>
+    <string name="pref_title_memory_cache_size">स्मृति कैश आकार</string>
+    <string name="pref_title_clear_disk_cache">स्पष्ट डिस्क कैशcaché de disco clara</string>
+    <string name="pref_description_clear_disk_cache">डिस्क कैश एप्लिकेशन को शुरू करने पर साफ हो जाएगा</string>
+    <string name="pref_description_keep_disk_cache">डिस्क कैश एप्लिकेशन को शुरू करने पर मंजूरी नहीं दी जाएगी</string>
 </resources>

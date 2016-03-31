@@ -34,8 +34,9 @@ import java.util.List;
 import java.util.SortedMap;
 
 /**
- * This class wraps up completing some arbitrary work when loading a bitmap to an ImageView.
- * It handles things like using a memory cache, scaling bitmaps and loading them randomly.
+ * This class wraps up completing some arbitrary long running work when loading a bitmap to an
+ * ImageView. It handles things like using a memory and disk cache, running the work in a background
+ * thread and setting a placeholder image.
  */
 public class ImageWorker {
 
@@ -47,6 +48,7 @@ public class ImageWorker {
     private static int mThumbnailWidth;
 
     private static Bitmap emptyPhoto;
+    private static Bitmap thumbnail;
 
     private static final int[] imageIds = {
             R.drawable.image_1, R.drawable.image_2, R.drawable.image_3,
@@ -99,6 +101,10 @@ public class ImageWorker {
             );
     }
 
+    public static void init(Bitmap thumbnail) {
+        ImageWorker.thumbnail = thumbnail;
+    }
+
     public static void init(List<SortedMap<Integer, String>> imageUrls) {
         ImageWorker.imageUrls = imageUrls;
     }
@@ -149,7 +155,7 @@ public class ImageWorker {
                         value, mThumbnailWidth, value.getHeight() * mThumbnailWidth / value.getWidth(), false
                 );
             }
-            ImageCache.addBitmapToCache(data, value);
+            ImageCache.addBitmapToMemoryCache(data, value);
         }
 
         imageView.setImageBitmap(value);
@@ -174,12 +180,10 @@ public class ImageWorker {
             // Bitmap found in memory cache
             imageView.setImageBitmap(value);
         } else {
-            if (isThumbnail) {
-                imageView.setImageBitmap(emptyPhoto);
-            }
+            imageView.setImageBitmap(isThumbnail ? emptyPhoto : thumbnail);
             NetworkInfo networkInfo = mConnMgr.getActiveNetworkInfo();
             if (networkInfo != null && networkInfo.isConnected()) {
-                new BitmapWorkerTask(data, url, isThumbnail, imageView).execute();
+                new DownloadBitmapTask(imageView, isThumbnail).execute(data, url);
             }
         }
     }
@@ -187,31 +191,27 @@ public class ImageWorker {
     /**
      * The actual AsyncTask that will asynchronously download the image.
      */
-    private static class BitmapWorkerTask extends AsyncTask<Void, Void, Bitmap> {
-        private final String data;
-        private final String url;
-        private final boolean isThumbnail;
+    private static class DownloadBitmapTask extends AsyncTask<String, Void, Bitmap> {
         private final ImageView imageView;
+        private final boolean isThumbnail;
 
-        public BitmapWorkerTask(String data, String url, boolean isThumbnail, ImageView imageView) {
-            this.data = data;
-            this.url = url;
-            this.isThumbnail = isThumbnail;
+        public DownloadBitmapTask(ImageView imageView, boolean isThumbnail) {
             this.imageView = imageView;
+            this.isThumbnail = isThumbnail;
         }
 
         /**
          * Background processing.
          */
         @Override
-        protected Bitmap doInBackground(Void... params) {
+        protected Bitmap doInBackground(String... params) {
             try {
                 // Try and fetch the bitmap from the cache
-                Bitmap bitmap = ImageCache.getBitmapFromDiskCache(data);
+                Bitmap bitmap = ImageCache.getBitmapFromDiskCache(params[0]);
 
                 // If the bitmap was not found in the cache, then call the downloadBitmap method
                 if (bitmap == null) {
-                    bitmap = downloadBitmap();
+                    bitmap = downloadBitmap(params[1]);
                 }
 
                 // If the bitmap was downloaded, then add the downloaded
@@ -222,7 +222,8 @@ public class ImageWorker {
                                 bitmap, mThumbnailWidth, bitmap.getHeight() * mThumbnailWidth / bitmap.getWidth(), false
                         );
                     }
-                    ImageCache.addBitmapToCache(data, bitmap);
+                    ImageCache.addBitmapToMemoryCache(params[0], bitmap);
+                    ImageCache.addBitmapToDiskCache(params[0], bitmap);
                 }
 
                 return bitmap;
@@ -241,7 +242,7 @@ public class ImageWorker {
 
         // Given a URL, establishes an HttpUrlConnection and retrieves
         // an image as a InputStream, which it returns as a bitmap.
-        private Bitmap downloadBitmap() throws IOException {
+        private Bitmap downloadBitmap(String url) throws IOException {
             InputStream is = null;
             try {
                 HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
