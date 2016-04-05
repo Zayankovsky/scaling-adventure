@@ -1,9 +1,11 @@
 package com.example.zayankovsky.homework;
 
+import android.Manifest;
 import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.ConnectivityManager;
@@ -14,12 +16,15 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -36,6 +41,7 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -51,16 +57,18 @@ import java.util.TreeMap;
 public class ImageListActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, ImageListFragment.OnImageListInteractionListener {
 
-    ViewPager mViewPager;
+    private ViewPager mViewPager;
 
     private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
     private Uri fileUri;
 
+    private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 200;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        String theme = sharedPref.getString("theme", "light");
-        setTheme(theme.equals("dark") ? R.style.DarkAppTheme_NoActionBar : R.style.LightAppTheme_NoActionBar);
+        boolean darkTheme = sharedPref.getString("theme", "light").equals("dark");
+        setTheme(darkTheme ? R.style.DarkAppTheme_NoActionBar : R.style.LightAppTheme_NoActionBar);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.image_list);
@@ -86,7 +94,7 @@ public class ImageListActivity extends AppCompatActivity
             public void onClick(View view) {
                 Intent intent = new Intent(Intent.ACTION_SENDTO);
                 intent.setData(Uri.parse("mailto:")); // only email apps should handle this
-                intent.putExtra(Intent.EXTRA_EMAIL, new String[]{getResources().getString(R.string.email)});
+                intent.putExtra(Intent.EXTRA_EMAIL, new String[] {getResources().getString(R.string.email)});
                 if (intent.resolveActivity(getPackageManager()) != null) {
                     startActivity(intent);
                 }
@@ -104,7 +112,7 @@ public class ImageListActivity extends AppCompatActivity
         navigationView.setCheckedItem(R.id.nav_gallery);
 
         GradientDrawable gradientDrawable = new GradientDrawable(
-                GradientDrawable.Orientation.BR_TL, theme.equals("dark") ?
+                GradientDrawable.Orientation.BR_TL, darkTheme ?
                 new int[] {0xFF4CAF50, 0xFF388E3C, 0xFF1B5E20} : new int[] {0xFFC8E6C9, 0xFF81C784, 0xFF4CAF50}
         );
         gradientDrawable.setGradientType(GradientDrawable.LINEAR_GRADIENT);
@@ -134,6 +142,12 @@ public class ImageListActivity extends AppCompatActivity
 
         final DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        ImageWorker.init(this, displayMetrics.widthPixels, displayMetrics.densityDpi, columnCount);
+
+        ImageCache.init(
+                this, Integer.parseInt(sharedPref.getString("memory_cache_size", "50")) * 1024,
+                sharedPref.getBoolean("clear_disk_cache", false)
+        );
 
         ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         if (ImageWorker.getFotkiSize() == 0) {
@@ -143,16 +157,6 @@ public class ImageListActivity extends AppCompatActivity
                 new DownloadXmlTask().execute(stringUrl);
             }
         }
-
-        ImageWorker.init(
-                getResources(), connMgr, getContentResolver(),
-                displayMetrics.widthPixels, displayMetrics.densityDpi, columnCount
-        );
-
-        ImageCache.init(
-                this, Integer.parseInt(sharedPref.getString("memory_cache_size", "50")) * 1024,
-                sharedPref.getBoolean("clear_disk_cache", false)
-        );
     }
 
     @Override
@@ -177,10 +181,7 @@ public class ImageListActivity extends AppCompatActivity
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (item.getItemId() == R.id.action_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
             return true;
         }
@@ -188,7 +189,6 @@ public class ImageListActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
@@ -228,7 +228,27 @@ public class ImageListActivity extends AppCompatActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK) {
-            ImageWorker.addToGallery(fileUri);
+            if (ContextCompat.checkSelfPermission(
+                    this, Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                        this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE
+                );
+            } else {
+                saveImageToGallery();
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        if (requestCode == MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE) {
+            // If request is cancelled, the result arrays are empty.
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // permission was granted, yay!
+                saveImageToGallery();
+            }
         }
     }
 
@@ -269,13 +289,22 @@ public class ImageListActivity extends AppCompatActivity
         return Uri.fromFile(mediaFile);
     }
 
+    private void saveImageToGallery() {
+        try {
+            String url = MediaStore.Images.Media.insertImage(getContentResolver(), fileUri.getPath(), null, null);
+            ImageWorker.addToGallery(Uri.parse(url));
+            //noinspection ResultOfMethodCallIgnored
+            new File(fileUri.getPath()).delete();
+        } catch (FileNotFoundException ignored) {}
+    }
+
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
-        private int mColumnCount;
+        private final int mColumnCount;
 
         public SectionsPagerAdapter(FragmentManager fm, int columnCount) {
             super(fm);
@@ -319,9 +348,9 @@ public class ImageListActivity extends AppCompatActivity
     }
 
     // Implementation of AsyncTask used to download XML feed from fotki.yandex.ru.
-    private class DownloadXmlTask extends AsyncTask<String, Void, List<SortedMap<Integer, String>>> {
+    private class DownloadXmlTask extends AsyncTask<String, Void, List<FotkiImage>> {
         @Override
-        protected List<SortedMap<Integer, String>> doInBackground(String... urls) {
+        protected List<FotkiImage> doInBackground(String... urls) {
             try {
                 return loadXmlFromNetwork(urls[0]);
             } catch (IOException e) {
@@ -332,7 +361,7 @@ public class ImageListActivity extends AppCompatActivity
         }
 
         @Override
-        protected void onPostExecute(List<SortedMap<Integer, String>> result) {
+        protected void onPostExecute(List<FotkiImage> result) {
             ImageWorker.init(result);
             if (!isDestroyed()) {
                 mViewPager.getAdapter().notifyDataSetChanged();
@@ -341,11 +370,11 @@ public class ImageListActivity extends AppCompatActivity
     }
 
     // Uploads XML from fotki.yandex.ru, parses it. Returns List of image urls.
-    private List<SortedMap<Integer, String>> loadXmlFromNetwork(String urlString) throws XmlPullParserException, IOException {
+    private List<FotkiImage> loadXmlFromNetwork(String urlString) throws XmlPullParserException, IOException {
         InputStream stream = null;
         // Instantiate the parser
         YandexFotkiXmlParser yandexFotkiXmlParser = new YandexFotkiXmlParser();
-        List<SortedMap<Integer, String>> fotki = null;
+        List<FotkiImage> fotki = null;
 
         try {
             stream = downloadUrl(urlString);
@@ -381,7 +410,7 @@ public class ImageListActivity extends AppCompatActivity
         // We don't use namespaces
         private final String ns = null;
 
-        public List<SortedMap<Integer, String>> parse(InputStream in) throws XmlPullParserException, IOException {
+        public List<FotkiImage> parse(InputStream in) throws XmlPullParserException, IOException {
             try {
                 XmlPullParser parser = Xml.newPullParser();
                 parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
@@ -393,8 +422,8 @@ public class ImageListActivity extends AppCompatActivity
             }
         }
 
-        private List<SortedMap<Integer, String>> readFeed(XmlPullParser parser) throws XmlPullParserException, IOException {
-            List<SortedMap<Integer, String>> fotki = new ArrayList<>();
+        private List<FotkiImage> readFeed(XmlPullParser parser) throws XmlPullParserException, IOException {
+            List<FotkiImage> fotki = new ArrayList<>();
 
             parser.require(XmlPullParser.START_TAG, ns, "feed");
             while (parser.next() != XmlPullParser.END_TAG) {
@@ -404,7 +433,7 @@ public class ImageListActivity extends AppCompatActivity
                 String name = parser.getName();
                 // Starts by looking for the entry tag
                 if (name.equals("entry")) {
-                    fotki.add(readEntry(parser));
+                    fotki.add(readFotkiImage(parser));
                 } else {
                     skip(parser);
                 }
@@ -412,33 +441,57 @@ public class ImageListActivity extends AppCompatActivity
             return fotki;
         }
 
-        // Parses the contents of an image. If it encounters a f:img tag, hands it off
-        // to readUrl methods for processing. Otherwise, skips the tag.
-        private SortedMap<Integer, String> readEntry(XmlPullParser parser) throws XmlPullParserException, IOException {
+        // Parses the contents of an image. If it encounters a title or f:img tag, hands it off
+        // to their respective "read" methods for processing. Otherwise, skips the tag.
+        private FotkiImage readFotkiImage(XmlPullParser parser) throws XmlPullParserException, IOException {
             parser.require(XmlPullParser.START_TAG, ns, "entry");
-            SortedMap<Integer, String> entry = new TreeMap<>();
+            String title = "";
+            SortedMap<Integer, String> urls = new TreeMap<>();
             while (parser.next() != XmlPullParser.END_TAG) {
                 if (parser.getEventType() != XmlPullParser.START_TAG) {
                     continue;
                 }
-                String name = parser.getName();
-                if (name.equals("f:img")) {
-                    readUrl(parser, entry);
-                } else {
-                    skip(parser);
+                switch (parser.getName()) {
+                    case "title":
+                        title = readTitle(parser);
+                        break;
+                    case "f:img":
+                        readUrl(parser, urls);
+                        break;
+                    default:
+                        skip(parser);
+                        break;
                 }
             }
-            return entry;
+            return new FotkiImage(title, urls);
+        }
+
+        // Processes title tags in the feed.
+        private String readTitle(XmlPullParser parser) throws IOException, XmlPullParserException {
+            parser.require(XmlPullParser.START_TAG, ns, "title");
+            String title = readText(parser);
+            parser.require(XmlPullParser.END_TAG, ns, "title");
+            return title;
         }
 
         // Processes f:img tags in the feed.
-        private void readUrl(XmlPullParser parser, SortedMap<Integer, String> image) throws IOException, XmlPullParserException {
+        private void readUrl(XmlPullParser parser, SortedMap<Integer, String> urls) throws IOException, XmlPullParserException {
             parser.require(XmlPullParser.START_TAG, ns, "f:img");
             int width = Integer.parseInt(parser.getAttributeValue(null, "width"));
-            String link = parser.getAttributeValue(null, "href");
+            String url = parser.getAttributeValue(null, "href");
             parser.nextTag();
             parser.require(XmlPullParser.END_TAG, ns, "f:img");
-            image.put(width, link);
+            urls.put(width, url);
+        }
+
+        // For the tags title and summary, extracts their text values.
+        private String readText(XmlPullParser parser) throws IOException, XmlPullParserException {
+            String result = "";
+            if (parser.next() == XmlPullParser.TEXT) {
+                result = parser.getText();
+                parser.nextTag();
+            }
+            return result;
         }
 
         private void skip(XmlPullParser parser) throws XmlPullParserException, IOException {

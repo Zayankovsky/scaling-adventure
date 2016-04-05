@@ -16,20 +16,35 @@
 
 package com.example.zayankovsky.homework;
 
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.FragmentActivity;
+import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.view.ContextMenu;
 import android.view.GestureDetector;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.WindowManager.LayoutParams;
 import android.widget.ImageView;
 
-public class ImageDetailActivity extends FragmentActivity {
+public class ImageDetailActivity extends AppCompatActivity {
     public static final String SECTION_NUMBER = "section_number";
     public static final String POSITION = "position";
     private ImageView mImageView;
+
+    private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 200;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -46,6 +61,32 @@ public class ImageDetailActivity extends FragmentActivity {
         // Locate the main ImageView
         mImageView = (ImageView) findViewById(R.id.imageView);
 
+        // Enable some additional newer visibility and ActionBar features
+        // to create a more immersive photo viewing experience
+        final ActionBar actionBar = getSupportActionBar();
+
+        if (actionBar != null) {
+            // Set home as up
+            actionBar.setDisplayHomeAsUpEnabled(true);
+
+            // Hide and show the ActionBar as the visibility changes
+            mImageView.setOnSystemUiVisibilityChangeListener(
+                    new View.OnSystemUiVisibilityChangeListener() {
+                        @Override
+                        public void onSystemUiVisibilityChange(int vis) {
+                            if ((vis & View.SYSTEM_UI_FLAG_LOW_PROFILE) != 0) {
+                                actionBar.hide();
+                            } else {
+                                actionBar.show();
+                            }
+                        }
+                    });
+
+            // Start low profile mode and hide ActionBar
+            mImageView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
+            actionBar.hide();
+        }
+
         GestureListener.init(this, mImageView);
         ScaleGestureListener.init(mImageView);
 
@@ -59,11 +100,14 @@ public class ImageDetailActivity extends FragmentActivity {
                 break;
             case 1:
                 ImageWorker.loadFotkiImage(position, mImageView);
+                registerForContextMenu(mImageView);
+                mImageView.setLongClickable(false);
                 break;
             case 2:
                 ImageWorker.loadImage(position, mImageView);
                 break;
         }
+        setTitle(ImageWorker.getTitle());
 
         // First we create the GestureListener that will include all our callbacks.
         // Then we create the GestureDetector, which takes that listener as an argument.
@@ -87,6 +131,70 @@ public class ImageDetailActivity extends FragmentActivity {
                 return true;
             }
         });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.context_menu, menu);
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.save:
+                if (ContextCompat.checkSelfPermission(
+                        this, Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(
+                            this, new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                            MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE
+                    );
+                } else {
+                    saveImageToGallery();
+                }
+                return true;
+            case R.id.open:
+                Uri webpage = Uri.parse(ImageWorker.getUrl());
+                Intent intent = new Intent(Intent.ACTION_VIEW, webpage);
+                if (intent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(intent);
+                }
+                return true;
+            default:
+                return super.onContextItemSelected(item);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        if (requestCode == MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE) {
+            // If request is cancelled, the result arrays are empty.
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // permission was granted, yay!
+                saveImageToGallery();
+            }
+        }
+    }
+
+    private void saveImageToGallery() {
+        BitmapDrawable drawable = (BitmapDrawable) mImageView.getDrawable();
+        if (drawable != null) {
+            String url = MediaStore.Images.Media.insertImage(
+                    getContentResolver(), drawable.getBitmap(), ImageWorker.getTitle(), null
+            );
+            ImageWorker.addToGallery(Uri.parse(url));
+        }
     }
 
     @Override

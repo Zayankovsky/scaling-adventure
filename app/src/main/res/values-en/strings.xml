@@ -25,4 +25,6 @@
     <string name="pref_description_clear_disk_cache">Disk cache will be cleared on app start</string>
     <string name="pref_description_keep_disk_cache">Disk cache will not be cleared on app start</string>
     <string name="camera">Make a photo</string>
+    <string name="browser">Open in browser</string>
+    <string name="save">Save in gallery</string>
 </resources>

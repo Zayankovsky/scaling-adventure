@@ -25,4 +25,6 @@
     <string name="pref_description_clear_disk_cache">磁盘缓存将在应用程序启动被清除</string>
     <string name="pref_description_keep_disk_cache">磁盘缓存将无法在应用开始被清除</string>
     <string name="camera">制作照片</string>
+    <string name="browser">在浏览器中打开</string>
+    <string name="save">保存在画廊</string>
 </resources>

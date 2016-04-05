@@ -25,4 +25,6 @@
     <string name="pref_description_keep_disk_cache">מטמון דיסק לא ינוקה על תחילת יישום</string>
     <string name="pref_description_clear_disk_cache">מטמון דיסק ינוקה בטעינת תחילת יישום</string>
     <string name="camera">להפוך תמונה</string>
+    <string name="browser">פתוח בדפדפן</string>
+    <string name="save">להציל בגלריה</string>
 </resources>

@@ -40,8 +40,8 @@ public class ImageCache {
     // Maximum memory cache size in kilobytes
     private static final int MAX_MEMORY_CACHE_SIZE = Math.round(0.8f * Runtime.getRuntime().maxMemory() / 1024);
 
-    // Disk cache size in bytes
-    private static final long DISK_CACHE_SIZE = 1024 * 1024 * 200; // 200MB
+    // Maximum disk cache size in bytes
+    private static final long MAX_DISK_CACHE_SIZE = 1024 * 1024 * 200; // 200MB
 
     private static LruCache<String, Bitmap> mMemoryCache;
     private static DiskLruCache mDiskLruCache;
@@ -184,10 +184,9 @@ public class ImageCache {
      * Get a usable cache directory (external if available, internal otherwise).
      *
      * @param context The context to use
-     * @param uniqueName A unique directory name to append to the cache dir
      * @return The cache dir
      */
-    private static File getDiskCacheDir(Context context, String uniqueName) {
+    private static File getDiskCacheDir(Context context) {
         // Check if media is mounted or storage is built-in, if so, try and use external cache dir
         // otherwise use internal cache dir
         final String cachePath =
@@ -195,7 +194,7 @@ public class ImageCache {
                 || !Environment.isExternalStorageRemovable() ?
                         context.getExternalCacheDir().getPath() : context.getCacheDir().getPath();
 
-        return new File(cachePath + File.separator + uniqueName);
+        return new File(cachePath + File.separator + "cache");
     }
 
     /**
@@ -251,15 +250,16 @@ public class ImageCache {
                     mDiskLruCache = null;
                 }
 
-                File diskCacheDir = getDiskCacheDir(context, "cache");
+                File diskCacheDir = getDiskCacheDir(context);
                 if (mDiskLruCache == null || mDiskLruCache.isClosed()) {
                     if (diskCacheDir != null) {
                         if (!diskCacheDir.exists()) {
+                            //noinspection ResultOfMethodCallIgnored
                             diskCacheDir.mkdirs();
                         }
                         try {
                             mDiskLruCache = DiskLruCache.open(
-                                    diskCacheDir, Math.min(DISK_CACHE_SIZE, Math.round(0.8 * diskCacheDir.getUsableSpace()))
+                                    diskCacheDir, Math.min(MAX_DISK_CACHE_SIZE, Math.round(0.8 * diskCacheDir.getUsableSpace()))
                             );
                         } catch (final IOException ignored) {}
                     }

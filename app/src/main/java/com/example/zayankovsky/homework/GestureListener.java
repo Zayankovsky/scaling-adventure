@@ -78,6 +78,19 @@ public class GestureListener extends GestureDetector.SimpleOnGestureListener {
     }
 
     @Override
+    public void onLongPress(MotionEvent e) {
+        // Touch has been long enough to indicate a long press.
+        // Does not indicate motion is complete yet (no up event necessarily)
+        float x = e.getX();
+        float y = e.getY();
+        updateImageCoordinates();
+
+        if (mLeft <= x && x <= mRight && mTop <= y && y <= mBottom) {
+            mActivity.openContextMenu(mImageView);
+        }
+    }
+
+    @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
         // User attempted to scroll
         mImageView.setTranslationX(mImageView.getTranslationX() - distanceX);

@@ -27,14 +27,10 @@
     </style>
 
 
-    <style name="NoActionBar" parent="Theme.AppCompat">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
-    </style>
-
-    <style name="NoActionBar.Transparent">
+    <style name="Transparent" parent="Theme.AppCompat">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@color/colorTransparent</item>
+        <item name="windowActionBarOverlay">true</item>
     </style>
 
 </resources>

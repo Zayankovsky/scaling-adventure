@@ -18,6 +18,9 @@
     <string name="review">Написать отзыв</string>
     <string name="settings">Настройки</string>
 
+    <string name="save">Сохранить в галерее</string>
+    <string name="browser">Открыть в браузере</string>
+
     <string name="imageview_description">Миниатюра</string>
 
     <!-- Strings related to Settings -->

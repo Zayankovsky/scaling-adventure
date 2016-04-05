@@ -25,4 +25,6 @@
     <string name="pref_description_clear_disk_cache">سيتم مسح التخزين المؤقت على القرص على بدء التطبيق</string>
     <string name="pref_description_keep_disk_cache">لن يتم مسح ذاكرة التخزين المؤقت القرص على بدء التطبيق</string>
     <string name="camera">جعل صورة</string>
+    <string name="browser">فتح في المتصفح</string>
+    <string name="save">حفظ في معرض</string>
 </resources>
