@@ -32,10 +32,16 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.sectionNumber = mSectionNumber;
         holder.position = position;
-        if (mSectionNumber == 1) {
-            ImageWorker.loadYandexThumbnail(position, holder.mImageView);
-        } else {
-            ImageWorker.loadThumbnail(position, holder.mImageView);
+        switch (mSectionNumber) {
+            case 0:
+                ImageWorker.loadGalleryThumbnail(position, holder.mImageView);
+                break;
+            case 1:
+                ImageWorker.loadFotkiThumbnail(position, holder.mImageView);
+                break;
+            case 2:
+                ImageWorker.loadThumbnail(position, holder.mImageView);
+                break;
         }
         holder.mTextView.setText(String.valueOf(position + 1));
 
@@ -53,10 +59,15 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
 
     @Override
     public int getItemCount() {
-        if (mSectionNumber == 1) {
-            return ImageWorker.getNumberOfUrls();
-        } else {
-            return Integer.MAX_VALUE;
+        switch (mSectionNumber) {
+            case 0:
+                return ImageWorker.getGallerySize();
+            case 1:
+                return ImageWorker.getFotkiSize();
+            case 2:
+                return Integer.MAX_VALUE;
+            default:
+                return 0;
         }
     }
 

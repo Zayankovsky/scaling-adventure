@@ -8,16 +8,20 @@
             android:title="@string/gallery" />
         <item
             android:id="@+id/nav_fotki"
-            android:icon="@drawable/ic_menu_camera"
+            android:icon="@drawable/ic_menu_fotki"
             android:title="@string/fotki" />
         <item
             android:id="@+id/nav_cache"
-            android:icon="@drawable/ic_menu_slideshow"
+            android:icon="@drawable/ic_menu_cached"
             android:title="@string/cache" />
     </group>
 
     <item android:title="@string/more">
         <menu>
+            <item
+                android:id="@+id/nav_camera"
+                android:icon="@drawable/ic_menu_camera"
+                android:title="@string/camera" />
             <item
                 android:id="@+id/nav_rate"
                 android:icon="@drawable/ic_menu_send"

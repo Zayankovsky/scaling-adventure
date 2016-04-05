@@ -53,10 +53,16 @@ public class ImageDetailActivity extends FragmentActivity {
         // (so a single cache can be used over all pages in the ViewPager)
         // based on the extra passed in to this activity
         int position = getIntent().getIntExtra(POSITION, 0);
-        if (getIntent().getIntExtra(SECTION_NUMBER, 0) == 1 && ImageWorker.getNumberOfUrls() > 0) {
-            ImageWorker.loadYandexImage(position, mImageView);
-        } else {
-            ImageWorker.loadImage(position, mImageView);
+        switch (getIntent().getIntExtra(SECTION_NUMBER, 0)) {
+            case 0:
+                ImageWorker.loadGalleryImage(position, mImageView);
+                break;
+            case 1:
+                ImageWorker.loadFotkiImage(position, mImageView);
+                break;
+            case 2:
+                ImageWorker.loadImage(position, mImageView);
+                break;
         }
 
         // First we create the GestureListener that will include all our callbacks.

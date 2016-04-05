@@ -24,4 +24,5 @@
     <string name="pref_title_clear_disk_cache">清除磁盘高速缓存</string>
     <string name="pref_description_clear_disk_cache">磁盘缓存将在应用程序启动被清除</string>
     <string name="pref_description_keep_disk_cache">磁盘缓存将无法在应用开始被清除</string>
+    <string name="camera">制作照片</string>
 </resources>

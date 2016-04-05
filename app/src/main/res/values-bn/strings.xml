@@ -24,4 +24,5 @@
     <string name="pref_title_clear_disk_cache">স্পষ্ট ডিস্ক ক্যাশে</string>
     <string name="pref_description_keep_disk_cache">ডিস্ক ক্যাশে অ্যাপ্লিকেশন সূচনা উপর সাফ করা হবে না</string>
     <string name="pref_description_clear_disk_cache">ডিস্ক ক্যাশে অ্যাপ্লিকেশন স্টার্ট সাফ করা হবে</string>
+    <string name="camera">একটি ছবির করা</string>
 </resources>

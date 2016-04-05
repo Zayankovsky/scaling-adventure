@@ -24,4 +24,5 @@
     <string name="pref_title_clear_disk_cache">Caché de disco clara</string>
     <string name="pref_description_clear_disk_cache">Caché de disco se borrará en el arranque de aplicaciones</string>
     <string name="pref_description_keep_disk_cache">Caché de disco no se borrará en el arranque de aplicaciones</string>
+    <string name="camera">Hacer una foto</string>
 </resources>

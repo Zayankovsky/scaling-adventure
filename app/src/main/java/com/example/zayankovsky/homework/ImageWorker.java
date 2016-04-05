@@ -16,12 +16,15 @@
 
 package com.example.zayankovsky.homework;
 
+import android.content.ContentResolver;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.provider.MediaStore;
 import android.widget.ImageView;
 
 import java.io.IOException;
@@ -42,6 +45,7 @@ public class ImageWorker {
 
     private static Resources mResources;
     private static ConnectivityManager mConnMgr;
+    private static ContentResolver mContentResolver;
     private static int mScreenDensity;
     private static int mColumnCount;
     private static int mImageWidth;
@@ -79,17 +83,19 @@ public class ImageWorker {
         }
     }
 
-    private static List<SortedMap<Integer, String>> imageUrls = new ArrayList<>();
+    private static List<SortedMap<Integer, String>> fotki = new ArrayList<>();
+    private static List<Uri> gallery = new ArrayList<>();
 
     static {
         permute(0);
         Collections.shuffle(randomizer);
     }
 
-    public static void init(Resources resources, ConnectivityManager connMgr,
+    public static void init(Resources resources, ConnectivityManager connMgr, ContentResolver contentResolver,
                             int screenWidth, int screenDensity, int columnCount) {
         mResources = resources;
         mConnMgr = connMgr;
+        mContentResolver = contentResolver;
         mScreenDensity = screenDensity;
         mColumnCount = columnCount;
         mImageWidth = screenWidth;
@@ -105,12 +111,20 @@ public class ImageWorker {
         ImageWorker.thumbnail = thumbnail;
     }
 
-    public static void init(List<SortedMap<Integer, String>> imageUrls) {
-        ImageWorker.imageUrls = imageUrls;
+    public static void init(List<SortedMap<Integer, String>> fotki) {
+        ImageWorker.fotki = fotki;
     }
 
-    public static int getNumberOfUrls() {
-        return imageUrls.size();
+    public static void addToGallery(Uri fileUri) {
+        gallery.add(fileUri);
+    }
+
+    public static int getFotkiSize() {
+        return fotki.size();
+    }
+
+    public static int getGallerySize() {
+        return gallery.size();
     }
 
     public static void loadThumbnail(int position, ImageView imageView) {
@@ -121,12 +135,20 @@ public class ImageWorker {
         getFromCacheOrResources("images/", position, imageView, false);
     }
 
-    public static void loadYandexThumbnail(int position, ImageView imageView) {
-        getFromCacheOrDownload("yandex/thumbnails/" + mThumbnailWidth + "/", position, imageView, true);
+    public static void loadFotkiThumbnail(int position, ImageView imageView) {
+        getFromCacheOrDownload("fotki/thumbnails/" + mThumbnailWidth + "/", position, imageView, true);
     }
 
-    public static void loadYandexImage(int position, ImageView imageView) {
-        getFromCacheOrDownload("yandex/images/", position, imageView, false);
+    public static void loadFotkiImage(int position, ImageView imageView) {
+        getFromCacheOrDownload("fotki/images/", position, imageView, false);
+    }
+
+    public static void loadGalleryThumbnail(int position, ImageView imageView) {
+        getFromCacheOrGallery("gallery/thumbnails/" + mThumbnailWidth + "/", position, imageView, true);
+    }
+
+    public static void loadGalleryImage(int position, ImageView imageView) {
+        getFromCacheOrGallery("gallery/images/", position, imageView, false);
     }
 
     /**
@@ -163,7 +185,7 @@ public class ImageWorker {
 
     private static void getFromCacheOrDownload(String prefix, int position, ImageView imageView, boolean isThumbnail) {
         int width = isThumbnail ? mThumbnailWidth : mImageWidth;
-        SortedMap<Integer, String> image = imageUrls.get(position % imageUrls.size());
+        SortedMap<Integer, String> image = fotki.get(position % fotki.size());
         String url = image.get(image.lastKey());
 
         for (SortedMap.Entry<Integer, String> entry : image.entrySet()) {
@@ -186,6 +208,26 @@ public class ImageWorker {
                 new DownloadBitmapTask(imageView, isThumbnail).execute(data, url);
             }
         }
+    }
+
+    private static void getFromCacheOrGallery(String prefix, int position, ImageView imageView, boolean isThumbnail) {
+        Uri uri = gallery.get(position % gallery.size());
+        String data = prefix + uri;
+        Bitmap value = ImageCache.getBitmapFromMemoryCache(data);
+
+        if (value == null) {
+            try {
+                value = MediaStore.Images.Media.getBitmap(mContentResolver, gallery.get(position % gallery.size()));
+                if (isThumbnail) {
+                    value = Bitmap.createScaledBitmap(
+                            value, mThumbnailWidth, value.getHeight() * mThumbnailWidth / value.getWidth(), false
+                    );
+                }
+                ImageCache.addBitmapToMemoryCache(data, value);
+            } catch (IOException ignored) {}
+        }
+
+        imageView.setImageBitmap(value);
     }
 
     /**

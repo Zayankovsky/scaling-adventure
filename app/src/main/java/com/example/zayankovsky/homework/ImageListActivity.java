@@ -11,7 +11,9 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
@@ -33,12 +35,16 @@ import android.view.MenuItem;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -46,6 +52,9 @@ public class ImageListActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, ImageListFragment.OnImageListInteractionListener {
 
     ViewPager mViewPager;
+
+    private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
+    private Uri fileUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,15 +129,14 @@ public class ImageListActivity extends AppCompatActivity
             }
 
             @Override
-            public void onPageScrollStateChanged(int state) {
-            }
+            public void onPageScrollStateChanged(int state) {}
         });
 
         final DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
         ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (ImageWorker.getNumberOfUrls() == 0) {
+        if (ImageWorker.getFotkiSize() == 0) {
             String stringUrl = "http://api-fotki.yandex.ru/api/podhistory/poddate;2012-04-01T12:00:00Z/";
             NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
             if (networkInfo != null && networkInfo.isConnected()) {
@@ -136,7 +144,11 @@ public class ImageListActivity extends AppCompatActivity
             }
         }
 
-        ImageWorker.init(getResources(), connMgr, displayMetrics.widthPixels, displayMetrics.densityDpi, columnCount);
+        ImageWorker.init(
+                getResources(), connMgr, getContentResolver(),
+                displayMetrics.widthPixels, displayMetrics.densityDpi, columnCount
+        );
+
         ImageCache.init(
                 this, Integer.parseInt(sharedPref.getString("memory_cache_size", "50")) * 1024,
                 sharedPref.getBoolean("clear_disk_cache", false)
@@ -188,6 +200,15 @@ public class ImageListActivity extends AppCompatActivity
             mViewPager.setCurrentItem(1);
         } else if (id == R.id.nav_cache) {
             mViewPager.setCurrentItem(2);
+        } else if (id == R.id.nav_camera) {
+            // create Intent to take a picture and return control to the calling application
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+            fileUri = getOutputMediaFileUri(); // create a file to save the image
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri); // set the image file name
+
+            // start the image capture Intent
+            startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
         } else if (id == R.id.nav_rate) {
             Intent intent = new Intent(Intent.ACTION_SENDTO);
             intent.setData(Uri.parse("mailto:")); // only email apps should handle this
@@ -202,6 +223,13 @@ public class ImageListActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK) {
+            ImageWorker.addToGallery(fileUri);
+        }
     }
 
     @Override
@@ -220,6 +248,25 @@ public class ImageListActivity extends AppCompatActivity
         else {
             startActivity(i);
         }
+    }
+
+    /** Create a file Uri for saving an image */
+    private Uri getOutputMediaFileUri() {
+        // To be safe, you should check that the SDCard is mounted
+        // using Environment.getExternalStorageState() before doing this.
+
+        File mediaStorageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+
+        // Create the storage directory if it does not exist
+        if (mediaStorageDir == null || ! mediaStorageDir.exists() && ! mediaStorageDir.mkdirs()) {
+            return null;
+        }
+
+        // Create a media file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        File mediaFile = new File(mediaStorageDir.getPath() + File.separator + "IMG_"+ timeStamp + ".jpg");
+
+        return Uri.fromFile(mediaFile);
     }
 
     /**
@@ -298,11 +345,11 @@ public class ImageListActivity extends AppCompatActivity
         InputStream stream = null;
         // Instantiate the parser
         YandexFotkiXmlParser yandexFotkiXmlParser = new YandexFotkiXmlParser();
-        List<SortedMap<Integer, String>> images = null;
+        List<SortedMap<Integer, String>> fotki = null;
 
         try {
             stream = downloadUrl(urlString);
-            images = yandexFotkiXmlParser.parse(stream);
+            fotki = yandexFotkiXmlParser.parse(stream);
             // Makes sure that the InputStream is closed after the app is
             // finished using it.
         } finally {
@@ -311,9 +358,9 @@ public class ImageListActivity extends AppCompatActivity
             }
         }
 
-        // YandexFotkiXmlParser returns a List (called "images") of SortedMap objects.
+        // YandexFotkiXmlParser returns a List (called "fotki") of SortedMap objects.
         // Each SortedMap object represents a single image in the XML feed.
-        return images;
+        return fotki;
     }
 
     // Given a string representation of a URL, sets up a connection and gets
@@ -347,7 +394,7 @@ public class ImageListActivity extends AppCompatActivity
         }
 
         private List<SortedMap<Integer, String>> readFeed(XmlPullParser parser) throws XmlPullParserException, IOException {
-            List<SortedMap<Integer, String>> images = new ArrayList<>();
+            List<SortedMap<Integer, String>> fotki = new ArrayList<>();
 
             parser.require(XmlPullParser.START_TAG, ns, "feed");
             while (parser.next() != XmlPullParser.END_TAG) {
@@ -357,31 +404,31 @@ public class ImageListActivity extends AppCompatActivity
                 String name = parser.getName();
                 // Starts by looking for the entry tag
                 if (name.equals("entry")) {
-                    images.add(readImage(parser));
+                    fotki.add(readEntry(parser));
                 } else {
                     skip(parser);
                 }
             }
-            return images;
+            return fotki;
         }
 
         // Parses the contents of an image. If it encounters a f:img tag, hands it off
         // to readUrl methods for processing. Otherwise, skips the tag.
-        private SortedMap<Integer, String> readImage(XmlPullParser parser) throws XmlPullParserException, IOException {
+        private SortedMap<Integer, String> readEntry(XmlPullParser parser) throws XmlPullParserException, IOException {
             parser.require(XmlPullParser.START_TAG, ns, "entry");
-            SortedMap<Integer, String> image = new TreeMap<>();
+            SortedMap<Integer, String> entry = new TreeMap<>();
             while (parser.next() != XmlPullParser.END_TAG) {
                 if (parser.getEventType() != XmlPullParser.START_TAG) {
                     continue;
                 }
                 String name = parser.getName();
                 if (name.equals("f:img")) {
-                    readUrl(parser, image);
+                    readUrl(parser, entry);
                 } else {
                     skip(parser);
                 }
             }
-            return image;
+            return entry;
         }
 
         // Processes f:img tags in the feed.
