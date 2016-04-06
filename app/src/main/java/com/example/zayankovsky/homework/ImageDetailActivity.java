@@ -157,7 +157,7 @@ public class ImageDetailActivity extends AppCompatActivity {
                         this, Manifest.permission.WRITE_EXTERNAL_STORAGE
                 ) != PackageManager.PERMISSION_GRANTED) {
                     ActivityCompat.requestPermissions(
-                            this, new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                            this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                             MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE
                     );
                 } else {
@@ -190,10 +190,11 @@ public class ImageDetailActivity extends AppCompatActivity {
     private void saveImageToGallery() {
         BitmapDrawable drawable = (BitmapDrawable) mImageView.getDrawable();
         if (drawable != null) {
+            String title = ImageWorker.getTitle();
             String url = MediaStore.Images.Media.insertImage(
-                    getContentResolver(), drawable.getBitmap(), ImageWorker.getTitle(), null
+                    getContentResolver(), drawable.getBitmap(), title, null
             );
-            ImageWorker.addToGallery(Uri.parse(url));
+            ImageWorker.addToGallery(title, Uri.parse(url));
         }
     }
 

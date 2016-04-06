@@ -83,7 +83,7 @@ public class ImageWorker {
     }
 
     private static List<FotkiImage> fotki = new ArrayList<>();
-    private static final List<Uri> gallery = new ArrayList<>();
+    private static final List<GalleryImage> gallery = new ArrayList<>();
 
     private static String title;
     private static String url;
@@ -115,8 +115,8 @@ public class ImageWorker {
         ImageWorker.fotki = fotki;
     }
 
-    public static void addToGallery(Uri fileUri) {
-        gallery.add(fileUri);
+    public static void addToGallery(String title, Uri uri) {
+        gallery.add(new GalleryImage(title, uri));
     }
 
     public static int getFotkiSize() {
@@ -225,32 +225,31 @@ public class ImageWorker {
     }
 
     private static void getFromCacheOrGallery(String prefix, int position, ImageView imageView, boolean isThumbnail) {
-        Uri uri = gallery.get(position % gallery.size());
+        GalleryImage image = gallery.get(position % gallery.size());
+        Uri uri = image.getUri();
         String data = prefix + uri;
         Bitmap value = ImageCache.getBitmapFromMemoryCache(data);
 
         if (value == null) {
-            try {
-                if (isThumbnail) {
-                    value = MediaStore.Images.Thumbnails.getThumbnail(
-                            mContext.getContentResolver(), ContentUris.parseId(gallery.get(position % gallery.size())),
-                            mThumbnailWidth > 96 ? MediaStore.Images.Thumbnails.MINI_KIND : MediaStore.Images.Thumbnails.MICRO_KIND,
-                            null
-                    );
-                    value = Bitmap.createScaledBitmap(
-                            value, mThumbnailWidth, value.getHeight() * mThumbnailWidth / value.getWidth(), false
-                    );
-                } else {
-                    value = MediaStore.Images.Media.getBitmap(
-                            mContext.getContentResolver(), gallery.get(position % gallery.size())
-                    );
-                }
-                ImageCache.addBitmapToMemoryCache(data, value);
-            } catch (IOException ignored) {}
+            if (isThumbnail) {
+                value = MediaStore.Images.Thumbnails.getThumbnail(
+                        mContext.getContentResolver(), ContentUris.parseId(uri),
+                        mThumbnailWidth > 96 ? MediaStore.Images.Thumbnails.MINI_KIND : MediaStore.Images.Thumbnails.MICRO_KIND,
+                        null
+                );
+                value = Bitmap.createScaledBitmap(
+                        value, mThumbnailWidth, value.getHeight() * mThumbnailWidth / value.getWidth(), false
+                );
+            } else {
+                try {
+                    value = MediaStore.Images.Media.getBitmap(mContext.getContentResolver(), uri);
+                } catch (IOException ignored) {}
+            }
+            ImageCache.addBitmapToMemoryCache(data, value);
         }
 
         imageView.setImageBitmap(value);
-        title = uri.getLastPathSegment();
+        title = image.getTitle();
     }
 
     /**
@@ -329,6 +328,24 @@ public class ImageWorker {
                     is.close();
                 }
             }
+        }
+    }
+
+    private static class GalleryImage {
+        private final String title;
+        private final Uri uri;
+
+        public GalleryImage(String title, Uri uri) {
+            this.title = title;
+            this.uri = uri;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public Uri getUri() {
+            return uri;
         }
     }
 }

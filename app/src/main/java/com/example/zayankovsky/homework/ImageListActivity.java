@@ -2,10 +2,12 @@ package com.example.zayankovsky.homework;
 
 import android.Manifest;
 import android.app.ActivityOptions;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.ConnectivityManager;
@@ -60,6 +62,7 @@ public class ImageListActivity extends AppCompatActivity
     private ViewPager mViewPager;
 
     private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
+    static final String FILE_URI = "fileUri";
     private Uri fileUri;
 
     private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 200;
@@ -72,6 +75,12 @@ public class ImageListActivity extends AppCompatActivity
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.image_list);
+
+        // Check whether we're recreating a previously destroyed instance
+        if (savedInstanceState != null) {
+            // Restore value of fileUri from saved state
+            fileUri = savedInstanceState.getParcelable(FILE_URI);
+        }
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -94,7 +103,7 @@ public class ImageListActivity extends AppCompatActivity
             public void onClick(View view) {
                 Intent intent = new Intent(Intent.ACTION_SENDTO);
                 intent.setData(Uri.parse("mailto:")); // only email apps should handle this
-                intent.putExtra(Intent.EXTRA_EMAIL, new String[] {getResources().getString(R.string.email)});
+                intent.putExtra(Intent.EXTRA_EMAIL, new String[]{getResources().getString(R.string.email)});
                 if (intent.resolveActivity(getPackageManager()) != null) {
                     startActivity(intent);
                 }
@@ -113,7 +122,7 @@ public class ImageListActivity extends AppCompatActivity
 
         GradientDrawable gradientDrawable = new GradientDrawable(
                 GradientDrawable.Orientation.BR_TL, darkTheme ?
-                new int[] {0xFF4CAF50, 0xFF388E3C, 0xFF1B5E20} : new int[] {0xFFC8E6C9, 0xFF81C784, 0xFF4CAF50}
+                new int[]{0xFF4CAF50, 0xFF388E3C, 0xFF1B5E20} : new int[]{0xFFC8E6C9, 0xFF81C784, 0xFF4CAF50}
         );
         gradientDrawable.setGradientType(GradientDrawable.LINEAR_GRADIENT);
         gradientDrawable.setShape(GradientDrawable.RECTANGLE);
@@ -149,12 +158,30 @@ public class ImageListActivity extends AppCompatActivity
                 sharedPref.getBoolean("clear_disk_cache", false)
         );
 
-        ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         if (ImageWorker.getFotkiSize() == 0) {
             String stringUrl = "http://api-fotki.yandex.ru/api/podhistory/poddate;2012-04-01T12:00:00Z/";
+            ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
             if (networkInfo != null && networkInfo.isConnected()) {
                 new DownloadXmlTask().execute(stringUrl);
+            }
+        }
+
+        if (ImageWorker.getGallerySize() == 0) {
+            Cursor mCursor = MediaStore.Images.Media.query(
+                    getContentResolver(), MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    new String[]{MediaStore.Images.ImageColumns._ID, MediaStore.Images.ImageColumns.TITLE}
+            );
+
+            if (mCursor != null) {
+                int indexId = mCursor.getColumnIndex(MediaStore.Images.ImageColumns._ID);
+                int indexTitle = mCursor.getColumnIndex(MediaStore.Images.ImageColumns.TITLE);
+                while (mCursor.moveToNext()) {
+                    ImageWorker.addToGallery(
+                            mCursor.getString(indexTitle),
+                            ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, mCursor.getLong(indexId))
+                    );
+                }
             }
         }
     }
@@ -226,6 +253,15 @@ public class ImageListActivity extends AppCompatActivity
     }
 
     @Override
+     public void onSaveInstanceState(Bundle savedInstanceState) {
+        // Save current fileUri
+        savedInstanceState.putParcelable(FILE_URI, fileUri);
+
+        // Always call the superclass so it can save the view hierarchy state
+        super.onSaveInstanceState(savedInstanceState);
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK) {
             if (ContextCompat.checkSelfPermission(
@@ -291,8 +327,8 @@ public class ImageListActivity extends AppCompatActivity
 
     private void saveImageToGallery() {
         try {
-            String url = MediaStore.Images.Media.insertImage(getContentResolver(), fileUri.getPath(), null, null);
-            ImageWorker.addToGallery(Uri.parse(url));
+            String url = MediaStore.Images.Media.insertImage(getContentResolver(), fileUri.getPath(), fileUri.getLastPathSegment(), null);
+            ImageWorker.addToGallery(fileUri.getLastPathSegment(), Uri.parse(url));
             //noinspection ResultOfMethodCallIgnored
             new File(fileUri.getPath()).delete();
         } catch (FileNotFoundException ignored) {}
