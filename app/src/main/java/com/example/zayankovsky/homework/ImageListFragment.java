@@ -4,46 +4,53 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 public class ImageListFragment extends Fragment {
     /**
-     * The fragment argument representing the section number for this
-     * fragment.
+     * The fragment argument representing the section number
+     * for this fragment.
      */
     private static final String ARG_SECTION_NUMBER = "section_number";
 
     /**
-     * The fragment argument representing the section number for this
-     * fragment.
+     * The fragment argument representing the column count
+     * for this fragment.
      */
     private static final String ARG_COLUMN_COUNT = "column-count";
 
+    /**
+     * The fragment argument representing number of images to download at a time
+     * for this fragment.
+     */
+    private static final String ARG_BATCH_SIZE = "batch_size";
+
     private int mSectionNumber = 0;
     private int mColumnCount = 4;
+    private int mBatchSize = 20;
     private OnImageListInteractionListener mListener;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public ImageListFragment() {
-    }
+    public ImageListFragment() {}
 
     /**
      * Returns a new instance of this fragment for the given section
      * number.
      */
-    public static ImageListFragment newInstance(int sectionNumber, int columnCount) {
+    public static ImageListFragment newInstance(int sectionNumber, int columnCount, int batchSize) {
         ImageListFragment fragment = new ImageListFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_SECTION_NUMBER, sectionNumber);
         args.putInt(ARG_COLUMN_COUNT, columnCount);
+        args.putInt(ARG_BATCH_SIZE, batchSize);
         fragment.setArguments(args);
         return fragment;
     }
@@ -55,6 +62,7 @@ public class ImageListFragment extends Fragment {
         if (getArguments() != null) {
             mSectionNumber = getArguments().getInt(ARG_SECTION_NUMBER);
             mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
+            mBatchSize = getArguments().getInt(ARG_BATCH_SIZE);
         }
     }
 
@@ -70,10 +78,10 @@ public class ImageListFragment extends Fragment {
             if (mColumnCount <= 1) {
                 recyclerView.setLayoutManager(new LinearLayoutManager(context));
             } else {
-                recyclerView.setLayoutManager(new StaggeredGridLayoutManager(mColumnCount, StaggeredGridLayoutManager.VERTICAL));
+                recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
 
-            recyclerView.setAdapter(new ImageListAdapter(mListener, mSectionNumber));
+            recyclerView.setAdapter(new ImageListAdapter(mListener, mSectionNumber, mBatchSize, context));
             recyclerView.addItemDecoration(new RecyclerView.ItemDecoration() {
                 @Override
                 public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {

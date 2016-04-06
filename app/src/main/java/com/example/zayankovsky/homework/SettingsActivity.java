@@ -71,10 +71,7 @@ public class SettingsActivity extends AppCompatActivity {
                     int index = listPreference.findIndexOfValue(stringValue);
 
                     // Set the summary to reflect the new value.
-                    preference.setSummary(
-                            index >= 0
-                                    ? listPreference.getEntries()[index]
-                                    : null);
+                    preference.setSummary(index >= 0 ? listPreference.getEntries()[index] : null);
 
                 } else {
                     // For all other preferences, set the summary to the value's
@@ -122,6 +119,7 @@ public class SettingsActivity extends AppCompatActivity {
             // to reflect the new value, per the Android Design guidelines.
             bindPreferenceSummaryToValue(findPreference("theme"), getActivity());
             bindPreferenceSummaryToValue(findPreference("column_count"), getActivity());
+            bindPreferenceSummaryToValue(findPreference("batch_size"), getActivity());
             bindPreferenceSummaryToValue(findPreference("memory_cache_size"), getActivity());
         }
     }

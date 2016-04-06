@@ -27,4 +27,15 @@
     <string name="camera">写真を作ります</string>
     <string name="browser">ブラウザで開く</string>
     <string name="save">ギャラリーに保存</string>
+    <string name="pref_50_images">50画像</string>
+    <string name="pref_5_images">5画像</string>
+    <string name="pref_45_images">45画像</string>
+    <string name="pref_40_images">40画像</string>
+    <string name="pref_35_images">35画像</string>
+    <string name="pref_30_images">30画像</string>
+    <string name="pref_25_images">25画像</string>
+    <string name="pref_20_images">20画像</string>
+    <string name="pref_15_images">15画像</string>
+    <string name="pref_10_images">10画像</string>
+    <string name="pref_title_batch_size">画像の数は、一度にロードします</string>
 </resources>

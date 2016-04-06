@@ -27,4 +27,15 @@
     <string name="camera">Make a photo</string>
     <string name="browser">Open in browser</string>
     <string name="save">Save in gallery</string>
+    <string name="pref_10_images">10 images</string>
+    <string name="pref_15_images">15 images</string>
+    <string name="pref_20_images">20 images</string>
+    <string name="pref_25_images">25 images</string>
+    <string name="pref_30_images">30 images</string>
+    <string name="pref_35_images">35 images</string>
+    <string name="pref_40_images">40 images</string>
+    <string name="pref_45_images">45 images</string>
+    <string name="pref_50_images">50 images</string>
+    <string name="pref_5_images">5 images</string>
+    <string name="pref_title_batch_size">Number of images to load at a time</string>
 </resources>

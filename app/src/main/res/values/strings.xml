@@ -59,6 +59,42 @@
         <item>6</item>
     </string-array>
 
+    <string name="pref_title_batch_size">Количество загружаемых за раз картинок</string>
+    <string name="pref_5_images">5 картинок</string>
+    <string name="pref_10_images">10 картинок</string>
+    <string name="pref_15_images">15 картинок</string>
+    <string name="pref_20_images">20 картинок</string>
+    <string name="pref_25_images">25 картинок</string>
+    <string name="pref_30_images">30 картинок</string>
+    <string name="pref_35_images">35 картинок</string>
+    <string name="pref_40_images">40 картинок</string>
+    <string name="pref_45_images">45 картинок</string>
+    <string name="pref_50_images">50 картинок</string>
+    <string-array name="pref_batch_size_titles">
+        <item>@string/pref_5_images</item>
+        <item>@string/pref_10_images</item>
+        <item>@string/pref_15_images</item>
+        <item>@string/pref_20_images</item>
+        <item>@string/pref_25_images</item>
+        <item>@string/pref_30_images</item>
+        <item>@string/pref_35_images</item>
+        <item>@string/pref_40_images</item>
+        <item>@string/pref_45_images</item>
+        <item>@string/pref_50_images</item>
+    </string-array>
+    <string-array name="pref_batch_size_values">
+        <item>5</item>
+        <item>10</item>
+        <item>15</item>
+        <item>20</item>
+        <item>25</item>
+        <item>30</item>
+        <item>35</item>
+        <item>40</item>
+        <item>45</item>
+        <item>50</item>
+    </string-array>
+
     <string name="pref_title_memory_cache_size">Размер кэш-памяти</string>
     <string name="pref_0_mb" translatable="false">0 MB</string>
     <string name="pref_5_mb" translatable="false">5 MB</string>

@@ -16,8 +16,10 @@
 
 package com.example.zayankovsky.homework;
 
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
@@ -33,6 +35,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.SortedMap;
 
@@ -42,8 +45,6 @@ import java.util.SortedMap;
  * thread and setting a placeholder image.
  */
 public class ImageWorker {
-
-    private static Context mContext;
 
     private static int mScreenDensity;
     private static int mColumnCount;
@@ -82,26 +83,25 @@ public class ImageWorker {
         }
     }
 
-    private static List<FotkiImage> fotki = new ArrayList<>();
+    private static final List<FotkiImage> fotki = new ArrayList<>();
     private static final List<GalleryImage> gallery = new ArrayList<>();
 
     private static String title;
     private static String url;
+    private static Date date;
 
     static {
         permute(0);
         Collections.shuffle(randomizer);
     }
 
-    public static void init(Context context, int screenWidth, int screenDensity, int columnCount) {
-        mContext = context;
-
+    public static void init(Resources resources, int screenWidth, int screenDensity, int columnCount) {
         mScreenDensity = screenDensity;
         mColumnCount = columnCount;
         mImageWidth = screenWidth;
         mThumbnailWidth = screenWidth / mColumnCount - 10;
 
-        emptyPhoto = BitmapFactory.decodeResource(context.getResources(), R.drawable.empty_photo);
+        emptyPhoto = BitmapFactory.decodeResource(resources, R.drawable.empty_photo);
         emptyPhoto = Bitmap.createScaledBitmap(
                 emptyPhoto, mThumbnailWidth, emptyPhoto.getHeight() * mThumbnailWidth / emptyPhoto.getWidth(), false
             );
@@ -111,8 +111,8 @@ public class ImageWorker {
         ImageWorker.thumbnail = thumbnail;
     }
 
-    public static void init(List<FotkiImage> fotki) {
-        ImageWorker.fotki = fotki;
+    public static void addToFotki(List<FotkiImage> fotki) {
+        ImageWorker.fotki.addAll(fotki);
     }
 
     public static void addToGallery(String title, Uri uri) {
@@ -133,6 +133,14 @@ public class ImageWorker {
 
     public static String getUrl() {
         return url;
+    }
+
+    public static Date getDate() {
+        return date;
+    }
+
+    public static Date getLastDate() {
+        return fotki.get(fotki.size() - 1).getDate();
     }
 
     public static void loadThumbnail(int position, ImageView imageView) {
@@ -167,6 +175,8 @@ public class ImageWorker {
      * @param position The position of the ImageView to bind the image to.
      */
     private static void getFromCacheOrResources(String prefix, int position, ImageView imageView, boolean isThumbnail) {
+        Resources resources = imageView.getResources();
+
         int permutation = randomizer.get(position / mColumnCount % 720);
         for (int i = 0; i < position % mColumnCount; ++i) {
             permutation /= 6;
@@ -179,7 +189,7 @@ public class ImageWorker {
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inDensity = mScreenDensity;
             options.inScaled = false;
-            value = BitmapFactory.decodeResource(mContext.getResources(), imageIds[index], options);
+            value = BitmapFactory.decodeResource(resources, imageIds[index], options);
             if (isThumbnail) {
                 value = Bitmap.createScaledBitmap(
                         value, mThumbnailWidth, value.getHeight() * mThumbnailWidth / value.getWidth(), false
@@ -189,17 +199,19 @@ public class ImageWorker {
         }
 
         imageView.setImageBitmap(value);
-        title = mContext.getResources().getResourceEntryName(imageIds[index]);
+        title = resources.getResourceEntryName(imageIds[index]);
     }
 
     private static void getFromCacheOrDownload(String prefix, int position, ImageView imageView, boolean isThumbnail) {
-        FotkiImage image = fotki.get(position % fotki.size());
+        FotkiImage image = fotki.get(position);
         SortedMap<Integer, String> urls = image.getUrls();
-        String url = urls.get(urls.lastKey());
-        int width = isThumbnail ? mThumbnailWidth : mImageWidth;
+        int reqWidth = isThumbnail ? mThumbnailWidth : mImageWidth;
+        int width = urls.lastKey();
+        String url = urls.get(width);
 
         for (SortedMap.Entry<Integer, String> entry : urls.entrySet()) {
-            if (entry.getKey() > width) {
+            if (entry.getKey() >= reqWidth) {
+                width = entry.getKey();
                 url = entry.getValue();
                 break;
             }
@@ -213,19 +225,23 @@ public class ImageWorker {
             imageView.setImageBitmap(value);
         } else {
             imageView.setImageBitmap(isThumbnail ? emptyPhoto : thumbnail);
-            ConnectivityManager connMgr = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+            ConnectivityManager connMgr =
+                    (ConnectivityManager) imageView.getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
             if (networkInfo != null && networkInfo.isConnected()) {
-                new DownloadBitmapTask(imageView, isThumbnail).execute(data, url);
+                new DownloadBitmapTask(imageView, isThumbnail, width).execute(data, url);
             }
         }
 
         title = image.getTitle();
         ImageWorker.url = url;
+        date = image.getDate();
     }
 
     private static void getFromCacheOrGallery(String prefix, int position, ImageView imageView, boolean isThumbnail) {
-        GalleryImage image = gallery.get(position % gallery.size());
+        ContentResolver contentResolver = imageView.getContext().getContentResolver();
+
+        GalleryImage image = gallery.get(position);
         Uri uri = image.getUri();
         String data = prefix + uri;
         Bitmap value = ImageCache.getBitmapFromMemoryCache(data);
@@ -233,7 +249,7 @@ public class ImageWorker {
         if (value == null) {
             if (isThumbnail) {
                 value = MediaStore.Images.Thumbnails.getThumbnail(
-                        mContext.getContentResolver(), ContentUris.parseId(uri),
+                        contentResolver, ContentUris.parseId(uri),
                         mThumbnailWidth > 96 ? MediaStore.Images.Thumbnails.MINI_KIND : MediaStore.Images.Thumbnails.MICRO_KIND,
                         null
                 );
@@ -242,7 +258,7 @@ public class ImageWorker {
                 );
             } else {
                 try {
-                    value = MediaStore.Images.Media.getBitmap(mContext.getContentResolver(), uri);
+                    value = MediaStore.Images.Media.getBitmap(contentResolver, uri);
                 } catch (IOException ignored) {}
             }
             ImageCache.addBitmapToMemoryCache(data, value);
@@ -258,10 +274,12 @@ public class ImageWorker {
     private static class DownloadBitmapTask extends AsyncTask<String, Void, Bitmap> {
         private final ImageView imageView;
         private final boolean isThumbnail;
+        private final int width;
 
-        public DownloadBitmapTask(ImageView imageView, boolean isThumbnail) {
+        public DownloadBitmapTask(ImageView imageView, boolean isThumbnail, int width) {
             this.imageView = imageView;
             this.isThumbnail = isThumbnail;
+            this.width = width;
         }
 
         /**
@@ -319,7 +337,9 @@ public class ImageWorker {
                 is = conn.getInputStream();
 
                 // Convert the InputStream into a bitmap
-                return BitmapFactory.decodeStream(is);
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inSampleSize = calculateInSampleSize(width, isThumbnail ? mThumbnailWidth : mImageWidth);
+                return BitmapFactory.decodeStream(is, null, options);
 
                 // Makes sure that the InputStream is closed after the app is
                 // finished using it.
@@ -328,6 +348,23 @@ public class ImageWorker {
                     is.close();
                 }
             }
+        }
+
+        private int calculateInSampleSize(int width, int reqWidth) {
+            int inSampleSize = 1;
+
+            if (width > reqWidth) {
+
+                final int halfWidth = width / 2;
+
+                // Calculate the largest inSampleSize value that is a power of 2 and keeps
+                // width larger than the requested height and width.
+                while ((halfWidth / inSampleSize) > reqWidth) {
+                    inSampleSize *= 2;
+                }
+            }
+
+            return inSampleSize;
         }
     }
 
