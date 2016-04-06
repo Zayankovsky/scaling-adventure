@@ -86,9 +86,11 @@ public class ImageWorker {
     private static final List<FotkiImage> fotki = new ArrayList<>();
     private static final List<GalleryImage> gallery = new ArrayList<>();
 
+    private static String author;
     private static String title;
+    private static Date published;
     private static String url;
-    private static Date date;
+    private static Date podDate;
 
     static {
         permute(0);
@@ -135,20 +137,28 @@ public class ImageWorker {
         return gallery.size();
     }
 
+    public static String getAuthor() {
+        return author;
+    }
+
     public static String getTitle() {
         return title;
+    }
+
+    public static Date getPublished() {
+        return published;
     }
 
     public static String getUrl() {
         return url;
     }
 
-    public static Date getDate() {
-        return date;
+    public static Date getPODDate() {
+        return podDate;
     }
 
-    public static Date getLastDate() {
-        return fotki.get(fotki.size() - 1).getDate();
+    public static Date getLastPODDate() {
+        return fotki.get(fotki.size() - 1).getPODDate();
     }
 
     public static void loadThumbnail(int position, ImageView imageView) {
@@ -241,9 +251,11 @@ public class ImageWorker {
             }
         }
 
+        author = image.getAuthor();
         title = image.getTitle();
+        published = image.getPublished();
         ImageWorker.url = url;
-        date = image.getDate();
+        podDate = image.getPODDate();
     }
 
     private static void getFromCacheOrGallery(String prefix, int position, ImageView imageView, boolean isThumbnail) {

@@ -38,11 +38,16 @@ import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.WindowManager.LayoutParams;
 import android.widget.ImageView;
+import android.widget.TextView;
+
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 public class ImageDetailActivity extends AppCompatActivity {
     public static final String SECTION_NUMBER = "section_number";
     public static final String POSITION = "position";
     private ImageView mImageView;
+    private TextView mTextView;
 
     private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 200;
 
@@ -58,8 +63,9 @@ public class ImageDetailActivity extends AppCompatActivity {
         // Set up activity to go full screen
         getWindow().addFlags(LayoutParams.FLAG_FULLSCREEN);
 
-        // Locate the main ImageView
+        // Locate the main ImageView and TextView
         mImageView = (ImageView) findViewById(R.id.imageView);
+        mTextView = (TextView) findViewById(R.id.textView);
 
         // Enable some additional newer visibility and ActionBar features
         // to create a more immersive photo viewing experience
@@ -102,6 +108,8 @@ public class ImageDetailActivity extends AppCompatActivity {
                 ImageWorker.loadFotkiImage(position, mImageView);
                 registerForContextMenu(mImageView);
                 mImageView.setLongClickable(false);
+                mTextView.setText("Author: " + ImageWorker.getAuthor() + "\n" + "Published: " +
+                        new SimpleDateFormat("d MMMM yyyy", Locale.getDefault()).format(ImageWorker.getPublished()));
                 break;
             case 2:
                 ImageWorker.loadImage(position, mImageView);

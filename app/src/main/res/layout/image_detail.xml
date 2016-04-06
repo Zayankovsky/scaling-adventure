@@ -26,4 +26,10 @@
         android:layout_height="fill_parent"
         android:contentDescription="@string/imageview_description" />
 
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center" />
+
 </FrameLayout>

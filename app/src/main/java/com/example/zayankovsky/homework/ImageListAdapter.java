@@ -86,12 +86,12 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
             case 1:
                 ImageWorker.loadFotkiThumbnail(position, holder.mImageView);
                 holder.mTextView.setText(
-                        new SimpleDateFormat("d MMM yyyy", Locale.getDefault()).format(ImageWorker.getDate())
+                        new SimpleDateFormat("d MMM yyyy", Locale.getDefault()).format(ImageWorker.getPODDate())
                 );
 
                 if (lastLoadSuccessful && position == ImageWorker.getFotkiSize() - 1) {
                     Calendar calendar = Calendar.getInstance();
-                    calendar.setTime(ImageWorker.getLastDate());
+                    calendar.setTime(ImageWorker.getLastPODDate());
                     calendar.add(Calendar.SECOND, -1);
 
                     updateFotki("http://api-fotki.yandex.ru/api/podhistory/poddate"
@@ -302,37 +302,66 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
         // to their respective "read" methods for processing. Otherwise, skips the tag.
         private FotkiImage readFotkiImage(XmlPullParser parser) throws XmlPullParserException, IOException {
             parser.require(XmlPullParser.START_TAG, ns, "entry");
+            String author = "";
             String title = "";
+            Date published = null;
             SortedMap<Integer, String> urls = new TreeMap<>();
-            Date date = null;
+            Date podDate = null;
             while (parser.next() != XmlPullParser.END_TAG) {
                 if (parser.getEventType() != XmlPullParser.START_TAG) {
                     continue;
                 }
                 switch (parser.getName()) {
+                    case "author":
+                        author = readAuthor(parser);
+                        break;
                     case "title":
-                        title = readTitle(parser);
+                        title = readText(parser, "title");
+                        break;
+                    case "published":
+                        published = readDate(parser, "published");
                         break;
                     case "f:img":
                         readUrl(parser, urls);
                         break;
                     case "f:pod-date":
-                        date = readDate(parser);
+                        podDate = readDate(parser, "f:pod-date");
                         break;
                     default:
                         skip(parser);
                         break;
                 }
             }
-            return new FotkiImage(title, urls, date);
+            return new FotkiImage(author, title, published, urls, podDate);
         }
 
-        // Processes title tags in the feed.
-        private String readTitle(XmlPullParser parser) throws IOException, XmlPullParserException {
-            parser.require(XmlPullParser.START_TAG, ns, "title");
-            String title = readText(parser);
-            parser.require(XmlPullParser.END_TAG, ns, "title");
-            return title;
+        // Processes author tags in the feed.
+        private String readAuthor(XmlPullParser parser) throws IOException, XmlPullParserException {
+            parser.require(XmlPullParser.START_TAG, ns, "author");
+            String author = "";
+            while (parser.next() != XmlPullParser.END_TAG) {
+                if (parser.getEventType() != XmlPullParser.START_TAG) {
+                    continue;
+                }
+                if (parser.getName().equals("name")) {
+                    author = readText(parser, "name");
+                } else {
+                    skip(parser);
+                }
+            }
+            return author;
+        }
+
+        // For the tags name and title, extracts their text values.
+        private String readText(XmlPullParser parser, String tag) throws IOException, XmlPullParserException {
+            parser.require(XmlPullParser.START_TAG, ns, tag);
+            String result = "";
+            if (parser.next() == XmlPullParser.TEXT) {
+                result = parser.getText();
+                parser.nextTag();
+            }
+            parser.require(XmlPullParser.END_TAG, ns, tag);
+            return result;
         }
 
         // Processes f:img tags in the feed.
@@ -345,26 +374,20 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
             urls.put(width, url);
         }
 
-        // Processes title tags in the feed.
-        private Date readDate(XmlPullParser parser) throws IOException, XmlPullParserException {
-            parser.require(XmlPullParser.START_TAG, ns, "f:pod-date");
-            String date = readText(parser);
-            parser.require(XmlPullParser.END_TAG, ns, "f:pod-date");
+        // Processes dates in the feed.
+        private Date readDate(XmlPullParser parser, String tag) throws IOException, XmlPullParserException {
+            parser.require(XmlPullParser.START_TAG, ns, tag);
+            String date = "";
+            if (parser.next() == XmlPullParser.TEXT) {
+                date = parser.getText();
+                parser.nextTag();
+            }
+            parser.require(XmlPullParser.END_TAG, ns, tag);
             try {
                 return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).parse(date);
             } catch (ParseException e) {
                 return null;
             }
-        }
-
-        // For the tags title and summary, extracts their text values.
-        private String readText(XmlPullParser parser) throws IOException, XmlPullParserException {
-            String result = "";
-            if (parser.next() == XmlPullParser.TEXT) {
-                result = parser.getText();
-                parser.nextTag();
-            }
-            return result;
         }
 
         private void skip(XmlPullParser parser) throws XmlPullParserException, IOException {
