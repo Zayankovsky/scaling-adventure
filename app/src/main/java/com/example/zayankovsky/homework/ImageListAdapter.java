@@ -7,6 +7,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.RecyclerView;
 import android.util.Xml;
 import android.view.LayoutInflater;
@@ -36,52 +37,31 @@ import java.util.TreeMap;
  * {@link RecyclerView.Adapter} that can display an image and makes a call to the
  * specified {@link ImageListFragment.OnImageListInteractionListener}.
  */
-public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.ViewHolder> {
+public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.ViewHolder>
+        implements SwipeRefreshLayout.OnRefreshListener {
 
     private final ImageListFragment.OnImageListInteractionListener mListener;
     private final int mSectionNumber;
     private final int mBatchSize;
-    private final ConnectivityManager mConnMgr;
+    private final View mParent;
     private boolean lastLoadSuccessful = true;
 
     public ImageListAdapter(ImageListFragment.OnImageListInteractionListener listener,
-                            int sectionNumber, int batchSize, Context context) {
+                            int sectionNumber, int batchSize, View parent) {
         mListener = listener;
         mSectionNumber = sectionNumber;
-        mConnMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         mBatchSize = batchSize;
+        mParent = parent;
 
         switch (sectionNumber) {
             case 0:
                 if (ImageWorker.getGallerySize() == 0) {
-                    Cursor mCursor = MediaStore.Images.Media.query(
-                            context.getContentResolver(), MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                            new String[]{MediaStore.Images.ImageColumns._ID, MediaStore.Images.ImageColumns.TITLE}
-                    );
-
-                    if (mCursor != null) {
-                        int indexId = mCursor.getColumnIndex(MediaStore.Images.ImageColumns._ID);
-                        int indexTitle = mCursor.getColumnIndex(MediaStore.Images.ImageColumns.TITLE);
-                        while (mCursor.moveToNext()) {
-                            ImageWorker.addToGallery(
-                                    mCursor.getString(indexTitle),
-                                    ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, mCursor.getLong(indexId))
-                            );
-                        }
-                        mCursor.close();
-                    }
+                    updateGallery();
                 }
                 break;
             case 1:
                 if (ImageWorker.getFotkiSize() == 0) {
-                    String stringUrl = "http://api-fotki.yandex.ru/api/podhistory/poddate/?limit=" + mBatchSize;
-
-                    NetworkInfo networkInfo = mConnMgr.getActiveNetworkInfo();
-                    if (networkInfo != null && networkInfo.isConnected()) {
-                        new DownloadXmlTask().execute(stringUrl);
-                    } else {
-                        lastLoadSuccessful = false;
-                    }
+                    updateFotki("http://api-fotki.yandex.ru/api/podhistory/poddate/?limit=" + mBatchSize);
                 }
                 break;
         }
@@ -114,16 +94,9 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
                     calendar.setTime(ImageWorker.getLastDate());
                     calendar.add(Calendar.SECOND, -1);
 
-                    String stringUrl = "http://api-fotki.yandex.ru/api/podhistory/poddate"
-                            + new SimpleDateFormat(";yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(calendar.getTime())
-                            + "/?limit=" + mBatchSize;
-
-                    NetworkInfo networkInfo = mConnMgr.getActiveNetworkInfo();
-                    if (networkInfo != null && networkInfo.isConnected()) {
-                        new DownloadXmlTask().execute(stringUrl);
-                    } else {
-                        lastLoadSuccessful = false;
-                    }
+                    updateFotki("http://api-fotki.yandex.ru/api/podhistory/poddate"
+                                    + new SimpleDateFormat(";yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(calendar.getTime())
+                                    + "/?limit=" + mBatchSize);
                 }
                 break;
             case 2:
@@ -158,6 +131,58 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
         }
     }
 
+    @Override
+    public void onRefresh() {
+        switch (mSectionNumber) {
+            case 0:
+                int itemCount = ImageWorker.getGallerySize();
+                ImageWorker.clearGallery();
+                notifyItemRangeRemoved(0, itemCount);
+                updateGallery();
+                break;
+            case 1:
+                itemCount = ImageWorker.getFotkiSize();
+                ImageWorker.clearFotki();
+                notifyItemRangeRemoved(0, itemCount);
+                updateFotki("http://api-fotki.yandex.ru/api/podhistory/poddate/?limit=" + mBatchSize);
+                break;
+        }
+    }
+
+    private void updateGallery() {
+        Cursor mCursor = MediaStore.Images.Media.query(
+                mParent.getContext().getContentResolver(), MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                new String[]{MediaStore.Images.ImageColumns._ID, MediaStore.Images.ImageColumns.TITLE}
+        );
+
+        if (mCursor != null) {
+            int indexId = mCursor.getColumnIndex(MediaStore.Images.ImageColumns._ID);
+            int indexTitle = mCursor.getColumnIndex(MediaStore.Images.ImageColumns.TITLE);
+            while (mCursor.moveToNext()) {
+                ImageWorker.addToGallery(
+                        mCursor.getString(indexTitle),
+                        ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, mCursor.getLong(indexId))
+                );
+                notifyItemInserted(ImageWorker.getGallerySize() - 1);
+            }
+            mCursor.close();
+        }
+
+        if (mParent instanceof SwipeRefreshLayout) {
+            ((SwipeRefreshLayout) mParent).setRefreshing(false);
+        }
+    }
+
+    private void updateFotki(String stringUrl) {
+        ConnectivityManager connMgr = (ConnectivityManager) mParent.getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        if (networkInfo != null && networkInfo.isConnected()) {
+            new DownloadXmlTask().execute(stringUrl);
+        } else {
+            lastLoadSuccessful = false;
+        }
+    }
+
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
         public final ImageView mImageView;
@@ -189,11 +214,14 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
         @Override
         protected void onPostExecute(List<FotkiImage> result) {
             if (result.size() > 0) {
-                int positionStart = ImageWorker.getFotkiSize();
                 ImageWorker.addToFotki(result);
-                notifyItemRangeInserted(positionStart, result.size());
+                notifyItemRangeInserted(ImageWorker.getFotkiSize() - result.size(), result.size());
             } else {
                 lastLoadSuccessful = false;
+            }
+
+            if (mParent instanceof SwipeRefreshLayout) {
+                ((SwipeRefreshLayout) mParent).setRefreshing(false);
             }
         }
     }

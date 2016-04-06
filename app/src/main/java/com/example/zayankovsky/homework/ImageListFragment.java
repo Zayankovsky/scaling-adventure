@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -67,21 +68,23 @@ public class ImageListFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.image_list_fragment, container, false);
+        View list = view.findViewById(R.id.list);
 
         // Set the adapter
-        if (view instanceof RecyclerView) {
+        if (list instanceof RecyclerView) {
             Context context = view.getContext();
-            RecyclerView recyclerView = (RecyclerView) view;
+            RecyclerView recyclerView = (RecyclerView) list;
             if (mColumnCount <= 1) {
                 recyclerView.setLayoutManager(new LinearLayoutManager(context));
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
 
-            recyclerView.setAdapter(new ImageListAdapter(mListener, mSectionNumber, mBatchSize, context));
+            ImageListAdapter adapter = new ImageListAdapter(mListener, mSectionNumber, mBatchSize, view);
+
+            recyclerView.setAdapter(adapter);
             recyclerView.addItemDecoration(new RecyclerView.ItemDecoration() {
                 @Override
                 public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
@@ -90,6 +93,15 @@ public class ImageListFragment extends Fragment {
                     outRect.bottom = 5;
                 }
             });
+
+            if (view instanceof SwipeRefreshLayout) {
+                final SwipeRefreshLayout layout = (SwipeRefreshLayout) view;
+                if (mSectionNumber == 2) {
+                    layout.setEnabled(false);
+                } else {
+                    layout.setOnRefreshListener(adapter);
+                }
+            }
         }
         return view;
     }

@@ -119,6 +119,14 @@ public class ImageWorker {
         gallery.add(new GalleryImage(title, uri));
     }
 
+    public static void clearFotki() {
+        fotki.clear();
+    }
+
+    public static void clearGallery() {
+        gallery.clear();
+    }
+
     public static int getFotkiSize() {
         return fotki.size();
     }
