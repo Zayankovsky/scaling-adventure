@@ -2,7 +2,6 @@
 <resources>
     <string name="fotki">Yandex.Images</string>
     <string name="name">Vitaly Zayankovsky</string>
-    <string name="app_name">משימה 1</string>
     <string name="gallery">גלריה</string>
     <string name="cache">מטמון</string>
     <string name="imageview_description">תמונה ממוזערת</string>

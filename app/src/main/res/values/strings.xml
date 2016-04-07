@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Зачётное задание №1</string>
+    <string name="app_name" translatable="false">Scaling Adventure</string>
 
     <string name="navigation_drawer_open">Открыть панель навигации</string>
     <string name="navigation_drawer_close">Закрыть панель навигации</string>

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Task #1</string>
     <string name="cache">Cache</string>
     <string name="fotki">Yandex.Images</string>
     <string name="gallery">Gallery</string>
