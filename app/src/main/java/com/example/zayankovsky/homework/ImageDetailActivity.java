@@ -47,7 +47,6 @@ public class ImageDetailActivity extends AppCompatActivity {
     public static final String SECTION_NUMBER = "section_number";
     public static final String POSITION = "position";
     private ImageView mImageView;
-    private TextView mTextView;
 
     private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 200;
 
@@ -65,7 +64,7 @@ public class ImageDetailActivity extends AppCompatActivity {
 
         // Locate the main ImageView and TextView
         mImageView = (ImageView) findViewById(R.id.imageView);
-        mTextView = (TextView) findViewById(R.id.textView);
+        TextView mTextView = (TextView) findViewById(R.id.textView);
 
         // Enable some additional newer visibility and ActionBar features
         // to create a more immersive photo viewing experience
@@ -161,9 +160,8 @@ public class ImageDetailActivity extends AppCompatActivity {
     public boolean onContextItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.save:
-                if (ContextCompat.checkSelfPermission(
-                        this, Manifest.permission.WRITE_EXTERNAL_STORAGE
-                ) != PackageManager.PERMISSION_GRANTED) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED) {
                     ActivityCompat.requestPermissions(
                             this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                             MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE

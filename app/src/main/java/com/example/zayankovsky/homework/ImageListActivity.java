@@ -48,6 +48,9 @@ public class ImageListActivity extends AppCompatActivity
     private Uri fileUri;
 
     private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 200;
+    private static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 210;
+
+    private static boolean myPermissionsGrantedReadExternalStorage = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,7 +99,8 @@ public class ImageListActivity extends AppCompatActivity
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close
+        );
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
@@ -141,6 +145,16 @@ public class ImageListActivity extends AppCompatActivity
                 this, Integer.parseInt(sharedPref.getString("memory_cache_size", "50")) * 1024,
                 sharedPref.getBoolean("clear_disk_cache", false)
         );
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                    this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
+            );
+        } else {
+            myPermissionsGrantedReadExternalStorage = true;
+        }
     }
 
     @Override
@@ -221,9 +235,8 @@ public class ImageListActivity extends AppCompatActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK) {
-            if (ContextCompat.checkSelfPermission(
-                    this, Manifest.permission.WRITE_EXTERNAL_STORAGE
-            ) != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(
                         this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                         MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE
@@ -236,12 +249,22 @@ public class ImageListActivity extends AppCompatActivity
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
-        if (requestCode == MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE) {
-            // If request is cancelled, the result arrays are empty.
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // permission was granted, yay!
-                saveImageToGallery();
-            }
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE:
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted, yay!
+                    myPermissionsGrantedReadExternalStorage = true;
+                    mViewPager.getAdapter().notifyDataSetChanged();
+                }
+                break;
+            case MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE:
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted, yay!
+                    saveImageToGallery();
+                }
+                break;
         }
     }
 
@@ -291,6 +314,10 @@ public class ImageListActivity extends AppCompatActivity
         } catch (FileNotFoundException ignored) {}
     }
 
+    public static boolean isReadExternalStoragePermissionGranted() {
+        return myPermissionsGrantedReadExternalStorage;
+    }
+
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
@@ -334,11 +361,10 @@ public class ImageListActivity extends AppCompatActivity
 
         @Override
         public int getItemPosition(Object object) {
-            if (((ImageListFragment) object).getSectionNumber() == 1) {
+            if (((ImageListFragment) object).getSectionNumber() == 0) {
                 return POSITION_NONE;
-            } else {
-                return POSITION_UNCHANGED;
             }
+            return super.getItemPosition(object);
         }
     }
 }

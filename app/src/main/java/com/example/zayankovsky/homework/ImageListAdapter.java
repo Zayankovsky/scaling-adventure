@@ -55,7 +55,7 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
 
         switch (sectionNumber) {
             case 0:
-                if (ImageWorker.getGallerySize() == 0) {
+                if (ImageWorker.getGallerySize() == 0 && ImageListActivity.isReadExternalStoragePermissionGranted()) {
                     updateGallery();
                 }
                 break;

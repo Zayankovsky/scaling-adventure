@@ -96,7 +96,8 @@ public class ImageListFragment extends Fragment {
 
             if (view instanceof SwipeRefreshLayout) {
                 final SwipeRefreshLayout layout = (SwipeRefreshLayout) view;
-                if (mSectionNumber == 2) {
+                if (mSectionNumber == 0 && !ImageListActivity.isReadExternalStoragePermissionGranted()
+                        || mSectionNumber == 2) {
                     layout.setEnabled(false);
                 } else {
                     layout.setOnRefreshListener(adapter);
