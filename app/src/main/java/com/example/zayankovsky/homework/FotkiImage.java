@@ -3,7 +3,7 @@ package com.example.zayankovsky.homework;
 import java.util.Date;
 import java.util.SortedMap;
 
-public class FotkiImage {
+class FotkiImage {
     private final String author;
     private final String title;
     private final Date published;

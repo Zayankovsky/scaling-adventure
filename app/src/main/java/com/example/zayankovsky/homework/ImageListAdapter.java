@@ -76,7 +76,6 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.sectionNumber = mSectionNumber;
-        holder.position = position;
 
         switch (mSectionNumber) {
             case 0:
@@ -188,7 +187,6 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
         public final ImageView mImageView;
         public final TextView mTextView;
         public int sectionNumber;
-        public int position;
 
         public ViewHolder(View view) {
             super(view);

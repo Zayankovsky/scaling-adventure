@@ -44,7 +44,7 @@ public class ImageListActivity extends AppCompatActivity
     private ViewPager mViewPager;
 
     private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
-    static final String FILE_URI = "fileUri";
+    private static final String FILE_URI = "fileUri";
     private Uri fileUri;
 
     private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 200;
@@ -183,32 +183,37 @@ public class ImageListActivity extends AppCompatActivity
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
-        int id = item.getItemId();
+        switch (item.getItemId()) {
+            case R.id.nav_gallery:
+                mViewPager.setCurrentItem(0);
+                break;
+            case R.id.nav_fotki:
+                mViewPager.setCurrentItem(1);
+                break;
+            case R.id.nav_cache:
+                mViewPager.setCurrentItem(2);
+                break;
+            case R.id.nav_camera:
+                // create Intent to take a picture and return control to the calling application
+                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
-        if (id == R.id.nav_gallery) {
-            mViewPager.setCurrentItem(0);
-        } else if (id == R.id.nav_fotki) {
-            mViewPager.setCurrentItem(1);
-        } else if (id == R.id.nav_cache) {
-            mViewPager.setCurrentItem(2);
-        } else if (id == R.id.nav_camera) {
-            // create Intent to take a picture and return control to the calling application
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                fileUri = getOutputMediaFileUri(); // create a file to save the image
+                intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri); // set the image file name
 
-            fileUri = getOutputMediaFileUri(); // create a file to save the image
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri); // set the image file name
-
-            // start the image capture Intent
-            startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
-        } else if (id == R.id.nav_rate) {
-            Intent intent = new Intent(Intent.ACTION_SENDTO);
-            intent.setData(Uri.parse("mailto:")); // only email apps should handle this
-            intent.putExtra(Intent.EXTRA_EMAIL, new String[] {getResources().getString(R.string.email)});
-            if (intent.resolveActivity(getPackageManager()) != null) {
-                startActivity(intent);
-            }
-        } else if (id == R.id.nav_settings) {
-            startActivity(new Intent(this, SettingsActivity.class));
+                // start the image capture Intent
+                startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
+                break;
+            case R.id.nav_rate:
+                intent = new Intent(Intent.ACTION_SENDTO);
+                intent.setData(Uri.parse("mailto:")); // only email apps should handle this
+                intent.putExtra(Intent.EXTRA_EMAIL, new String[]{getResources().getString(R.string.email)});
+                if (intent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(intent);
+                }
+                break;
+            case R.id.nav_settings:
+                startActivity(new Intent(this, SettingsActivity.class));
+                break;
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -265,7 +270,7 @@ public class ImageListActivity extends AppCompatActivity
     public void onImageListInteraction(ImageListAdapter.ViewHolder holder) {
         final Intent i = new Intent(this, ImageDetailActivity.class);
         i.putExtra(ImageDetailActivity.SECTION_NUMBER, holder.sectionNumber);
-        i.putExtra(ImageDetailActivity.POSITION, holder.position);
+        i.putExtra(ImageDetailActivity.POSITION, holder.getAdapterPosition());
         BitmapDrawable drawable = (BitmapDrawable) holder.mImageView.getDrawable();
         if (drawable != null) {
             ImageWorker.init(drawable.getBitmap());

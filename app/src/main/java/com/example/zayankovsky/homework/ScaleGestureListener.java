@@ -19,7 +19,7 @@ package com.example.zayankovsky.homework;
 import android.view.ScaleGestureDetector;
 import android.widget.ImageView;
 
-public class ScaleGestureListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+class ScaleGestureListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
 
     private static ImageView mImageView;
 

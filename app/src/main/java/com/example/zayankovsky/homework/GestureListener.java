@@ -24,7 +24,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 
-public class GestureListener extends GestureDetector.SimpleOnGestureListener {
+class GestureListener extends GestureDetector.SimpleOnGestureListener {
 
     private static Activity mActivity;
     private static ImageView mImageView;

@@ -3,7 +3,7 @@
     <string name="cache">Cache</string>
     <string name="fotki">Yandex.Images</string>
     <string name="gallery">Gallery</string>
-    <string name="imageview_description">Image Thumbnail</string>
+    <string name="thumbnail">Thumbnail</string>
     <string name="more">More</string>
     <string name="name">Vitaly Zayankovsky</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
@@ -38,4 +38,5 @@
     <string name="pref_5_images">5 images</string>
     <string name="pref_title_batch_size">Number of images to load at a time</string>
     <string name="detail_text">Author: %1$s\nPublished: %2$s</string>
+    <string name="image">Image</string>
 </resources>

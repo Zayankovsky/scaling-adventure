@@ -4,7 +4,7 @@
     <string name="name">Vitaly Zayankovsky</string>
     <string name="gallery">גלריה</string>
     <string name="cache">מטמון</string>
-    <string name="imageview_description">תמונה ממוזערת</string>
+    <string name="thumbnail">תמונה ממוזערת</string>
     <string name="more">יותר</string>
     <string name="navigation_drawer_open">פתח את חלונית הניווט</string>
     <string name="navigation_drawer_close">סגור את חלונית הניווט</string>
@@ -37,4 +37,6 @@
     <string name="pref_20_images">20 תמונות</string>
     <string name="pref_15_images">15 תמונות</string>
     <string name="pref_title_batch_size">מספר תמונות לטעון בכל פעם</string>
+    <string name="detail_text">מחבר: %1$s\nפורסם: %2$s</string>
+    <string name="image">תמונה</string>
 </resources>

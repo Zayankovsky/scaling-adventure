@@ -5,7 +5,7 @@
     <string name="name">Vitaly Zayankovsky</string>
     <string name="cache">ক্যাশে</string>
     <string name="gallery">দরদালান</string>
-    <string name="imageview_description">চিত্র থাম্বনেল</string>
+    <string name="thumbnail">চিত্র থাম্বনেল</string>
     <string name="more">অধিক</string>
     <string name="navigation_drawer_close">নেভিগেশান ড্রয়ার বন্ধ করুন</string>
     <string name="navigation_drawer_open">নেভিগেশান ড্রয়ার খুলুন</string>
@@ -37,4 +37,6 @@
     <string name="pref_10_images">10 চিত্র</string>
     <string name="pref_5_images">5 চিত্র</string>
     <string name="pref_title_batch_size">চিত্র সংখ্যা একবারে লোড করা</string>
+    <string name="detail_text">লেখক: %1$s\nপ্রকাশিত: %2$s</string>
+    <string name="image">ভাবমূর্তি</string>
 </resources>

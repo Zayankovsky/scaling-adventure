@@ -7,7 +7,7 @@
     <string name="more">もっと</string>
     <string name="cache">キャッシュ</string>
     <string name="gallery">ギャラリー</string>
-    <string name="imageview_description">画像サムネイル</string>
+    <string name="thumbnail">画像サムネイル</string>
     <string name="navigation_drawer_close">ナビゲーションドロワーを閉じます</string>
     <string name="navigation_drawer_open">オープンナビゲーションドロワー</string>
     <string name="pref_2_columns">2列</string>
@@ -37,4 +37,6 @@
     <string name="pref_15_images">15画像</string>
     <string name="pref_10_images">10画像</string>
     <string name="pref_title_batch_size">画像の数は、一度にロードします</string>
+    <string name="detail_text">著者：%1$s\n発行：%2$s</string>
+    <string name="image">画像</string>
 </resources>

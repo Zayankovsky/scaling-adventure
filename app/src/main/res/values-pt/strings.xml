@@ -8,7 +8,7 @@
     <string name="cache">Esconderijo</string>
     <string name="gallery">Galeria</string>
     <string name="navigation_drawer_close">Feche a gaveta de navegação</string>
-    <string name="imageview_description">Miniatura</string>
+    <string name="thumbnail">Miniatura</string>
     <string name="navigation_drawer_open">Gaveta de navegação aberta</string>
     <string name="pref_2_columns">2 colunas</string>
     <string name="pref_3_columns">3 colunas</string>
@@ -37,4 +37,6 @@
     <string name="pref_15_images">15 imagens</string>
     <string name="pref_10_images">10 imagens</string>
     <string name="pref_title_batch_size">Número de imagens para carregar em um momento</string>
+    <string name="detail_text">Autor: %1$s\nPublicado: %2$s</string>
+    <string name="image">Imagem</string>
 </resources>

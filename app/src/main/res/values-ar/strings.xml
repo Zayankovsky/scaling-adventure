@@ -5,7 +5,7 @@
     <string name="name">Vitaly Zayankovsky</string>
     <string name="cache">مخبأ</string>
     <string name="gallery">صالة عرض</string>
-    <string name="imageview_description">صورة مصغرة</string>
+    <string name="thumbnail">صورة مصغرة</string>
     <string name="more">أكثر</string>
     <string name="navigation_drawer_close">انهيار درج الملاحة</string>
     <string name="navigation_drawer_open">فتح درج الملاحة</string>
@@ -37,4 +37,6 @@
     <string name="pref_45_images">45 صور</string>
     <string name="pref_50_images">50 صورة</string>
     <string name="pref_title_batch_size">عدد من الصور لتحميل في وقت</string>
+    <string name="detail_text">الكاتب: %1$s\nنشرت: %2$s</string>
+    <string name="image">صورة</string>
 </resources>

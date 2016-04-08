@@ -7,7 +7,7 @@
     <string name="more">更多</string>
     <string name="gallery">画廊</string>
     <string name="cache">高速缓存</string>
-    <string name="imageview_description">图片缩略图</string>
+    <string name="thumbnail">图片缩略图</string>
     <string name="navigation_drawer_close">关闭导览</string>
     <string name="navigation_drawer_open">打开抽屉式导航栏</string>
     <string name="pref_2_columns">2列</string>
@@ -37,4 +37,6 @@
     <string name="pref_50_images">50幅图像</string>
     <string name="pref_5_images">5张图片</string>
     <string name="pref_title_batch_size">图像数来同时加载</string>
+    <string name="detail_text">作者：%1$s\n发布时间：%2$s</string>
+    <string name="image">图片</string>
 </resources>

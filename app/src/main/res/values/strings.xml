@@ -21,7 +21,8 @@
     <string name="save">Сохранить в галерее</string>
     <string name="browser">Открыть в браузере</string>
 
-    <string name="imageview_description">Миниатюра</string>
+    <string name="image">Изображение</string>
+    <string name="thumbnail">Миниатюра</string>
 
     <string name="detail_text">Автор: %1$s\nОпубликовано: %2$s</string>
 
@@ -35,7 +36,7 @@
         <item>@string/pref_light_theme</item>
         <item>@string/pref_dark_theme</item>
     </string-array>
-    <string-array name="pref_theme_values">
+    <string-array name="pref_theme_values" translatable="false">
         <item>light</item>
         <item>dark</item>
     </string-array>
@@ -53,7 +54,7 @@
         <item>@string/pref_5_columns</item>
         <item>@string/pref_6_columns</item>
     </string-array>
-    <string-array name="pref_column_count_values">
+    <string-array name="pref_column_count_values" translatable="false">
         <item>2</item>
         <item>3</item>
         <item>4</item>
@@ -84,7 +85,7 @@
         <item>@string/pref_45_images</item>
         <item>@string/pref_50_images</item>
     </string-array>
-    <string-array name="pref_batch_size_values">
+    <string-array name="pref_batch_size_values" translatable="false">
         <item>5</item>
         <item>10</item>
         <item>15</item>
@@ -142,7 +143,7 @@
         <item>@string/pref_95_mb</item>
         <item>@string/pref_100_mb</item>
     </string-array>
-    <string-array name="pref_memory_cache_size_values">
+    <string-array name="pref_memory_cache_size_values" translatable="false">
         <item>0</item>
         <item>5</item>
         <item>10</item>

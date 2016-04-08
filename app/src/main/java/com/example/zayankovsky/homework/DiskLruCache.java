@@ -16,6 +16,8 @@
 
 package com.example.zayankovsky.homework;
 
+import android.support.annotation.NonNull;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.Closeable;
@@ -91,9 +93,8 @@ import java.util.concurrent.TimeUnit;
  * responding appropriately.
  */
 public final class DiskLruCache implements Closeable {
-    static final String JOURNAL_FILE = "journal";
-    static final String JOURNAL_FILE_TMP = "journal.tmp";
-    static final long ANY_SEQUENCE_NUMBER = -1;
+    private static final String JOURNAL_FILE = "journal";
+    private static final String JOURNAL_FILE_TMP = "journal.tmp";
     private static final String CLEAN = "CLEAN";
     private static final String DIRTY = "DIRTY";
     private static final String REMOVE = "REMOVE";
@@ -143,20 +144,13 @@ public final class DiskLruCache implements Closeable {
     private int redundantOpCount;
 
     /**
-     * To differentiate between old and current snapshots, each entry is given
-     * a sequence number each time an edit is committed. A snapshot is stale if
-     * its sequence number is not equal to its entry's sequence number.
-     */
-    private long nextSequenceNumber = 0;
-
-    /**
      * Returns the ASCII characters up to but not including the next "\r\n", or
      * "\n".
      *
      * @throws EOFException if the stream is exhausted before the next newline
      *     character.
      */
-    public static String readAsciiLine(InputStream in) throws IOException {
+    private static String readAsciiLine(InputStream in) throws IOException {
         StringBuilder result = new StringBuilder(80);
         while (true) {
             int c = in.read();
@@ -178,7 +172,7 @@ public final class DiskLruCache implements Closeable {
     /**
      * Closes 'closeable', ignoring any checked exceptions. Does nothing if 'closeable' is null.
      */
-    public static void closeQuietly(Closeable closeable) {
+    private static void closeQuietly(Closeable closeable) {
         if (closeable != null) {
             try {
                 closeable.close();
@@ -192,7 +186,7 @@ public final class DiskLruCache implements Closeable {
     /**
      * Recursively delete everything in {@code dir}.
      */
-    public static void deleteContents(File dir) throws IOException {
+    private static void deleteContents(File dir) throws IOException {
         File[] files = dir.listFiles();
         if (files == null) {
             throw new IllegalArgumentException("not a directory: " + dir);
@@ -241,8 +235,7 @@ public final class DiskLruCache implements Closeable {
      * @param maxSize the maximum number of bytes this cache should use to store
      * @throws IOException if reading or writing the cache directory fails
      */
-    public static DiskLruCache open(File directory, long maxSize)
-            throws IOException {
+    public static DiskLruCache open(File directory, long maxSize) throws IOException {
         if (maxSize <= 0) {
             throw new IllegalArgumentException("maxSize <= 0");
         }
@@ -262,7 +255,9 @@ public final class DiskLruCache implements Closeable {
         }
 
         // create a new empty cache
-        directory.mkdirs();
+        if (!directory.mkdirs() && !directory.isDirectory()) {
+            throw new IOException("directory was not created");
+        }
         cache = new DiskLruCache(directory, maxSize);
         cache.rebuildJournal();
         return cache;
@@ -351,7 +346,9 @@ public final class DiskLruCache implements Closeable {
         }
 
         writer.close();
-        journalFileTmp.renameTo(journalFile);
+        if (!journalFileTmp.renameTo(journalFile)) {
+            throw new IOException("file was not renamed");
+        }
         journalWriter = new BufferedWriter(new FileWriter(journalFile, true), IO_BUFFER_SIZE);
     }
 
@@ -392,7 +389,7 @@ public final class DiskLruCache implements Closeable {
         }
 
         redundantOpCount++;
-        journalWriter.append(READ + ' ' + key + '\n');
+        journalWriter.append(READ + ' ').append(key).append('\n');
         if (journalRebuildRequired()) {
             executorService.submit(cleanupCallable);
         }
@@ -404,18 +401,10 @@ public final class DiskLruCache implements Closeable {
      * Returns an editor for the entry named {@code key}, or null if another
      * edit is in progress.
      */
-    public Editor edit(String key) throws IOException {
-        return edit(key, ANY_SEQUENCE_NUMBER);
-    }
-
-    private synchronized Editor edit(String key, long expectedSequenceNumber) throws IOException {
+    public synchronized Editor edit(String key) throws IOException {
         checkNotClosed();
         validateKey(key);
         Entry entry = lruEntries.get(key);
-        if (expectedSequenceNumber != ANY_SEQUENCE_NUMBER
-                && (entry == null || entry.sequenceNumber != expectedSequenceNumber)) {
-            return null; // snapshot is stale
-        }
         if (entry == null) {
             entry = new Entry(key);
             lruEntries.put(key, entry);
@@ -450,7 +439,9 @@ public final class DiskLruCache implements Closeable {
         if (success) {
             if (dirty.exists()) {
                 File clean = entry.getCleanFile();
-                dirty.renameTo(clean);
+                if (!dirty.renameTo(clean)) {
+                    throw new IOException("file was not renamed");
+                }
                 long oldLength = entry.length;
                 long newLength = clean.length();
                 entry.length = newLength;
@@ -465,9 +456,6 @@ public final class DiskLruCache implements Closeable {
         if (entry.readable | success) {
             entry.readable = true;
             journalWriter.write(CLEAN + ' ' + entry.key + ' ' + entry.length + '\n');
-            if (success) {
-                entry.sequenceNumber = nextSequenceNumber++;
-            }
         } else {
             lruEntries.remove(entry.key);
             journalWriter.write(REMOVE + ' ' + entry.key + '\n');
@@ -491,15 +479,13 @@ public final class DiskLruCache implements Closeable {
     /**
      * Drops the entry for {@code key} if it exists and can be removed. Entries
      * actively being edited cannot be removed.
-     *
-     * @return true if an entry was removed.
      */
-    public synchronized boolean remove(String key) throws IOException {
+    private synchronized void remove(String key) throws IOException {
         checkNotClosed();
         validateKey(key);
         Entry entry = lruEntries.get(key);
         if (entry == null || entry.currentEditor != null) {
-            return false;
+            return;
         }
 
         File file = entry.getCleanFile();
@@ -510,14 +496,12 @@ public final class DiskLruCache implements Closeable {
         entry.length = 0;
 
         redundantOpCount++;
-        journalWriter.append(REMOVE + ' ' + key + '\n');
+        journalWriter.append(REMOVE + ' ').append(key).append('\n');
         lruEntries.remove(key);
 
         if (journalRebuildRequired()) {
             executorService.submit(cleanupCallable);
         }
-
-        return true;
     }
 
     /**
@@ -657,7 +641,7 @@ public final class DiskLruCache implements Closeable {
                 }
             }
 
-            @Override public void write(byte[] buffer, int offset, int length) {
+            @Override public void write(@NonNull byte[] buffer, int offset, int length) {
                 try {
                     out.write(buffer, offset, length);
                 } catch (IOException e) {
@@ -694,9 +678,6 @@ public final class DiskLruCache implements Closeable {
 
         /** The ongoing edit or null if this entry is not being edited. */
         private Editor currentEditor;
-
-        /** The sequence number of the most recently committed edit to this entry. */
-        private long sequenceNumber;
 
         private Entry(String key) {
             this.key = key;

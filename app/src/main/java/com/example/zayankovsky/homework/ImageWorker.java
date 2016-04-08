@@ -44,7 +44,7 @@ import java.util.SortedMap;
  * ImageView. It handles things like using a memory and disk cache, running the work in a background
  * thread and setting a placeholder image.
  */
-public class ImageWorker {
+class ImageWorker {
 
     private static int mScreenDensity;
     private static int mColumnCount;
