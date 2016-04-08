@@ -17,6 +17,8 @@
 package com.example.zayankovsky.homework;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.BitmapDrawable;
@@ -56,15 +58,16 @@ public class ImageDetailActivity extends AppCompatActivity {
         setContentView(R.layout.image_detail);
         getWindow().getDecorView().setBackgroundResource(
                 PreferenceManager.getDefaultSharedPreferences(this).getString("theme", "light").equals("dark") ?
-                        R.color.darkColorTransparent : R.color.lightColorTransparent
-        );
+                        R.color.darkColorTransparent : R.color.lightColorTransparent);
 
         // Set up activity to go full screen
         getWindow().addFlags(LayoutParams.FLAG_FULLSCREEN);
 
         // Locate the main ImageView and TextView
         mImageView = (ImageView) findViewById(R.id.imageView);
-        TextView mTextView = (TextView) findViewById(R.id.textView);
+        final TextView mTextView = (TextView) findViewById(R.id.textView);
+
+        final int sectionNumber = getIntent().getIntExtra(SECTION_NUMBER, 0);
 
         // Enable some additional newer visibility and ActionBar features
         // to create a more immersive photo viewing experience
@@ -74,15 +77,31 @@ public class ImageDetailActivity extends AppCompatActivity {
             // Set home as up
             actionBar.setDisplayHomeAsUpEnabled(true);
 
-            // Hide and show the ActionBar as the visibility changes
+            // Hide and show the ActionBar and TextView as the visibility changes
             mImageView.setOnSystemUiVisibilityChangeListener(
                     new View.OnSystemUiVisibilityChangeListener() {
                         @Override
                         public void onSystemUiVisibilityChange(int vis) {
                             if ((vis & View.SYSTEM_UI_FLAG_LOW_PROFILE) != 0) {
                                 actionBar.hide();
+                                if (sectionNumber == 1) {
+                                    mTextView.animate().translationY(mTextView.getHeight()).setListener(new AnimatorListenerAdapter() {
+                                        @Override
+                                        public void onAnimationEnd(Animator animation) {
+                                            mTextView.setVisibility(View.GONE);
+                                        }
+                                    });
+                                }
                             } else {
                                 actionBar.show();
+                                if (sectionNumber == 1) {
+                                    mTextView.animate().translationY(0).setListener(new AnimatorListenerAdapter() {
+                                        @Override
+                                        public void onAnimationStart(Animator animation) {
+                                            mTextView.setVisibility(View.VISIBLE);
+                                        }
+                                    });
+                                }
                             }
                         }
                     });
@@ -99,7 +118,7 @@ public class ImageDetailActivity extends AppCompatActivity {
         // (so a single cache can be used over all pages in the ViewPager)
         // based on the extra passed in to this activity
         int position = getIntent().getIntExtra(POSITION, 0);
-        switch (getIntent().getIntExtra(SECTION_NUMBER, 0)) {
+        switch (sectionNumber) {
             case 0:
                 ImageWorker.loadGalleryImage(position, mImageView);
                 break;
@@ -107,8 +126,10 @@ public class ImageDetailActivity extends AppCompatActivity {
                 ImageWorker.loadFotkiImage(position, mImageView);
                 registerForContextMenu(mImageView);
                 mImageView.setLongClickable(false);
-                mTextView.setText("Author: " + ImageWorker.getAuthor() + "\n" + "Published: " +
-                        new SimpleDateFormat("d MMMM yyyy", Locale.getDefault()).format(ImageWorker.getPublished()));
+                mTextView.setText(getResources().getString(
+                        R.string.detail_text, ImageWorker.getAuthor(),
+                        new SimpleDateFormat("d MMMM yyyy", Locale.getDefault()).format(ImageWorker.getPublished())
+                ));
                 break;
             case 2:
                 ImageWorker.loadImage(position, mImageView);

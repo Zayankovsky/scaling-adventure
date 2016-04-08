@@ -182,7 +182,7 @@ public class ImageWorker {
     }
 
     public static void loadGalleryImage(int position, ImageView imageView) {
-        getFromCacheOrGallery("gallery/images/", position, imageView, false);
+        getFromCacheOrGallery("gallery/images/" + mImageWidth + "/", position, imageView, false);
     }
 
     /**

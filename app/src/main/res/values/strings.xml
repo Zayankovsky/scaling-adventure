@@ -23,6 +23,8 @@
 
     <string name="imageview_description">Миниатюра</string>
 
+    <string name="detail_text">Автор: %1$s\nОпубликовано: %2$s</string>
+
     <!-- Strings related to Settings -->
 
     <!-- Example General settings -->

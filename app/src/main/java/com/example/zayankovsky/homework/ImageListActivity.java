@@ -117,11 +117,7 @@ public class ImageListActivity extends AppCompatActivity
 
         navigationView.getHeaderView(0).setBackground(gradientDrawable);
 
-        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-            }
-
+        mViewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
                 if (position == 0) {
@@ -132,9 +128,6 @@ public class ImageListActivity extends AppCompatActivity
                     navigationView.setCheckedItem(R.id.nav_cache);
                 }
             }
-
-            @Override
-            public void onPageScrollStateChanged(int state) {}
         });
 
         final DisplayMetrics displayMetrics = new DisplayMetrics();
