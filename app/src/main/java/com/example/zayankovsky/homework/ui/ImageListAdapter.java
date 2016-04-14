@@ -182,13 +182,9 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
     }
 
     private void updateFotki(String stringUrl) {
-        ConnectivityManager connMgr = (ConnectivityManager) mParent.getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        if (networkInfo != null && networkInfo.isConnected()) {
-            new DownloadXmlTask().execute(stringUrl);
-        } else {
-            lastLoadFromNetworkSuccessful = false;
-        }
+        new DownloadXmlTask(
+                (ConnectivityManager) mParent.getContext().getSystemService(Context.CONNECTIVITY_SERVICE)
+        ).execute(stringUrl);
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -207,7 +203,12 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
 
     // Implementation of AsyncTask used to download XML feed from fotki.yandex.ru.
     private class DownloadXmlTask extends AsyncTask<String, List<FotkiImage>, List<FotkiImage>> {
-        boolean loadFromFileSuccessful = false;
+        private final ConnectivityManager connMgr;
+        private boolean loadFromFileSuccessful = false;
+
+        public DownloadXmlTask(ConnectivityManager connectivityManager) {
+            connMgr = connectivityManager;
+        }
 
         @Override
         protected List<FotkiImage> doInBackground(String... urls) {
@@ -218,11 +219,14 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
                 } catch (IOException ignored) {}
             }
 
-            try {
-                return loadFromNetwork(urls[0]);
-            } catch (IOException | XmlPullParserException ignored) {
-                return new ArrayList<>();
+            NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+            if (networkInfo != null && networkInfo.isConnected()) {
+                try {
+                    return loadFromNetwork(urls[0]);
+                } catch (IOException | XmlPullParserException ignored) {}
             }
+
+            return new ArrayList<>();
         }
 
         @SafeVarargs

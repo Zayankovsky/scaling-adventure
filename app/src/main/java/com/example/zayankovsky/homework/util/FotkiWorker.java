@@ -158,12 +158,7 @@ public class FotkiWorker extends ImageWorker {
             imageView.setImageBitmap(value);
         } else {
             imageView.setImageBitmap(isThumbnail ? emptyPhoto : thumbnail);
-            ConnectivityManager connMgr =
-                    (ConnectivityManager) imageView.getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-            if (networkInfo != null && networkInfo.isConnected()) {
-                new DownloadBitmapTask(imageView, isThumbnail, width).execute(data, url);
-            }
+            new DownloadBitmapTask(imageView, isThumbnail, width).execute(data, url);
         }
 
         author = image.getAuthor();
@@ -177,11 +172,13 @@ public class FotkiWorker extends ImageWorker {
      * The actual AsyncTask that will asynchronously download the image.
      */
     private static class DownloadBitmapTask extends AsyncTask<String, Void, Bitmap> {
+        private final ConnectivityManager connMgr;
         private final ImageView imageView;
         private final boolean isThumbnail;
         private final int width;
 
         public DownloadBitmapTask(ImageView imageView, boolean isThumbnail, int width) {
+            this.connMgr = (ConnectivityManager) imageView.getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
             this.imageView = imageView;
             this.isThumbnail = isThumbnail;
             this.width = width;
@@ -198,7 +195,10 @@ public class FotkiWorker extends ImageWorker {
 
                 // If the bitmap was not found in the cache, then call the downloadBitmap method
                 if (bitmap == null) {
-                    bitmap = downloadBitmap(params[1]);
+                    NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+                    if (networkInfo != null && networkInfo.isConnected()) {
+                        bitmap = downloadBitmap(params[1]);
+                    }
                 }
 
                 // If the bitmap was downloaded, then add the downloaded
@@ -224,7 +224,9 @@ public class FotkiWorker extends ImageWorker {
          */
         @Override
         protected void onPostExecute(Bitmap value) {
-            imageView.setImageBitmap(value);
+            if (value != null) {
+                imageView.setImageBitmap(value);
+            }
         }
 
         // Given a URL, establishes an HttpUrlConnection and retrieves
