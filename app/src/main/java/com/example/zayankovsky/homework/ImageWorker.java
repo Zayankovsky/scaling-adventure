@@ -29,14 +29,20 @@ import android.os.AsyncTask;
 import android.provider.MediaStore;
 import android.widget.ImageView;
 
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.SortedMap;
 
 /**
@@ -129,6 +135,28 @@ class ImageWorker {
         gallery.clear();
     }
 
+    public static void saveFotki(FileOutputStream fileOutputStream) throws IOException {
+        DataOutputStream outputStream = new DataOutputStream(new BufferedOutputStream(fileOutputStream));
+        outputStream.writeInt(fotki.size());
+
+        for (FotkiImage image : fotki) {
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+            outputStream.writeUTF(dateFormat.format(image.getPODDate()));
+
+            outputStream.writeInt(image.getUrls().size());
+            for (SortedMap.Entry<Integer, String> entry : image.getUrls().entrySet()) {
+                outputStream.writeInt(entry.getKey());
+                outputStream.writeUTF(entry.getValue());
+            }
+
+            outputStream.writeUTF(dateFormat.format(image.getPublished()));
+            outputStream.writeUTF(image.getAuthor());
+            outputStream.writeUTF(image.getTitle());
+        }
+
+        outputStream.close();
+    }
+
     public static int getFotkiSize() {
         return fotki.size();
     }
@@ -170,11 +198,11 @@ class ImageWorker {
     }
 
     public static void loadFotkiThumbnail(int position, ImageView imageView) {
-        getFromCacheOrDownload("fotki/thumbnails/" + mThumbnailWidth + "/", position, imageView, true);
+        getFromCacheOrNetwork("fotki/thumbnails/" + mThumbnailWidth + "/", position, imageView, true);
     }
 
     public static void loadFotkiImage(int position, ImageView imageView) {
-        getFromCacheOrDownload("fotki/images/", position, imageView, false);
+        getFromCacheOrNetwork("fotki/images/", position, imageView, false);
     }
 
     public static void loadGalleryThumbnail(int position, ImageView imageView) {
@@ -220,7 +248,7 @@ class ImageWorker {
         title = resources.getResourceEntryName(imageIds[index]);
     }
 
-    private static void getFromCacheOrDownload(String prefix, int position, ImageView imageView, boolean isThumbnail) {
+    private static void getFromCacheOrNetwork(String prefix, int position, ImageView imageView, boolean isThumbnail) {
         FotkiImage image = fotki.get(position);
         SortedMap<Integer, String> urls = image.getUrls();
         int reqWidth = isThumbnail ? mThumbnailWidth : mImageWidth;

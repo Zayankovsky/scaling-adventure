@@ -19,10 +19,13 @@ import android.widget.TextView;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -44,7 +47,7 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
     private final int mSectionNumber;
     private final int mBatchSize;
     private final View mParent;
-    private boolean lastLoadSuccessful = true;
+    private boolean lastLoadFromNetworkSuccessful = false;
 
     public ImageListAdapter(ImageListFragment.OnImageListInteractionListener listener,
                             int sectionNumber, int batchSize, View parent) {
@@ -88,7 +91,7 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
                         new SimpleDateFormat("d MMM yyyy", Locale.getDefault()).format(ImageWorker.getPODDate())
                 );
 
-                if (lastLoadSuccessful && position == ImageWorker.getFotkiSize() - 1) {
+                if (lastLoadFromNetworkSuccessful && position == ImageWorker.getFotkiSize() - 1) {
                     Calendar calendar = Calendar.getInstance();
                     calendar.setTime(ImageWorker.getLastPODDate());
                     calendar.add(Calendar.SECOND, -1);
@@ -178,7 +181,7 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
         if (networkInfo != null && networkInfo.isConnected()) {
             new DownloadXmlTask().execute(stringUrl);
         } else {
-            lastLoadSuccessful = false;
+            lastLoadFromNetworkSuccessful = false;
         }
     }
 
@@ -197,25 +200,48 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
     }
 
     // Implementation of AsyncTask used to download XML feed from fotki.yandex.ru.
-    private class DownloadXmlTask extends AsyncTask<String, Void, List<FotkiImage>> {
+    private class DownloadXmlTask extends AsyncTask<String, List<FotkiImage>, List<FotkiImage>> {
+        boolean loadFromFileSuccessful = false;
+
         @Override
         protected List<FotkiImage> doInBackground(String... urls) {
+            if (ImageWorker.getFotkiSize() == 0) {
+                try {
+                    //noinspection unchecked
+                    publishProgress(loadFromFile());
+                } catch (IOException ignored) {}
+            }
+
             try {
-                return loadXmlFromNetwork(urls[0]);
-            } catch (IOException e) {
+                return loadFromNetwork(urls[0]);
+            } catch (IOException | XmlPullParserException ignored) {
                 return new ArrayList<>();
-            } catch (XmlPullParserException e) {
-                return new ArrayList<>();
+            }
+        }
+
+        @SafeVarargs
+        @Override
+        protected final void onProgressUpdate(List<FotkiImage>... progress) {
+            if (!progress[0].isEmpty()) {
+                loadFromFileSuccessful = true;
+                ImageWorker.addToFotki(progress[0]);
+                notifyItemRangeInserted(ImageWorker.getFotkiSize() - progress[0].size(), progress[0].size());
             }
         }
 
         @Override
         protected void onPostExecute(List<FotkiImage> result) {
-            if (result.size() > 0) {
+            if (lastLoadFromNetworkSuccessful = !result.isEmpty()) {
+                if (loadFromFileSuccessful) {
+                    int itemCount = ImageWorker.getFotkiSize();
+                    ImageWorker.clearFotki();
+                    notifyItemRangeRemoved(0, itemCount);
+                }
                 ImageWorker.addToFotki(result);
                 notifyItemRangeInserted(ImageWorker.getFotkiSize() - result.size(), result.size());
-            } else {
-                lastLoadSuccessful = false;
+                try {
+                    ImageWorker.saveFotki(mParent.getContext().openFileOutput("fotki.dat", Context.MODE_PRIVATE));
+                } catch (IOException ignored) {}
             }
 
             if (mParent instanceof SwipeRefreshLayout) {
@@ -224,8 +250,41 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
         }
     }
 
-    // Uploads XML from fotki.yandex.ru, parses it. Returns List of image urls.
-    private List<FotkiImage> loadXmlFromNetwork(String urlString) throws XmlPullParserException, IOException {
+    private List<FotkiImage> loadFromFile() throws IOException {
+        DataInputStream inputStream = new DataInputStream(
+                new BufferedInputStream(mParent.getContext().openFileInput("fotki.dat"))
+        );
+
+        int fotkiSize = inputStream.readInt();
+        List<FotkiImage> fotki = new ArrayList<>(fotkiSize);
+
+        for (int i = 0; i < fotkiSize; ++i) {
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+            Date podDate = null;
+            try {
+                podDate = dateFormat.parse(inputStream.readUTF());
+            } catch (ParseException ignored) {}
+
+            int urlsSize = inputStream.readInt();
+            SortedMap<Integer, String> urls = new TreeMap<>();
+            for (int j = 0; j < urlsSize; ++j) {
+                urls.put(inputStream.readInt(), inputStream.readUTF());
+            }
+
+            Date published = null;
+            try {
+                published = dateFormat.parse(inputStream.readUTF());
+            } catch (ParseException ignored) {}
+
+            fotki.add(new FotkiImage(inputStream.readUTF(), inputStream.readUTF(), published, urls, podDate));
+        }
+
+        inputStream.close();
+        return fotki;
+    }
+
+    // Uploads XML from fotki.yandex.ru, parses it. Returns List of FotkiImage objects.
+    private List<FotkiImage> loadFromNetwork(String urlString) throws XmlPullParserException, IOException {
         InputStream stream = null;
         // Instantiate the parser
         YandexFotkiXmlParser yandexFotkiXmlParser = new YandexFotkiXmlParser();
