@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.zayankovsky.homework;
+package com.example.zayankovsky.homework.ui;
 
 import android.Manifest;
 import android.animation.Animator;
@@ -41,6 +41,12 @@ import android.view.View;
 import android.view.WindowManager.LayoutParams;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.example.zayankovsky.homework.R;
+import com.example.zayankovsky.homework.util.FotkiWorker;
+import com.example.zayankovsky.homework.util.GalleryWorker;
+import com.example.zayankovsky.homework.util.ImageWorker;
+import com.example.zayankovsky.homework.util.ResourcesWorker;
 
 import java.text.SimpleDateFormat;
 import java.util.Locale;
@@ -120,19 +126,19 @@ public class ImageDetailActivity extends AppCompatActivity {
         int position = getIntent().getIntExtra(POSITION, 0);
         switch (sectionNumber) {
             case 0:
-                ImageWorker.loadGalleryImage(position, mImageView);
+                GalleryWorker.loadImage(position, mImageView);
                 break;
             case 1:
-                ImageWorker.loadFotkiImage(position, mImageView);
+                FotkiWorker.loadImage(position, mImageView);
                 registerForContextMenu(mImageView);
                 mImageView.setLongClickable(false);
                 mTextView.setText(getResources().getString(
-                        R.string.detail_text, ImageWorker.getAuthor(),
-                        new SimpleDateFormat("d MMMM yyyy", Locale.getDefault()).format(ImageWorker.getPublished())
+                        R.string.detail_text, FotkiWorker.getAuthor(),
+                        new SimpleDateFormat("d MMMM yyyy", Locale.getDefault()).format(FotkiWorker.getPublished())
                 ));
                 break;
             case 2:
-                ImageWorker.loadImage(position, mImageView);
+                ResourcesWorker.loadImage(position, mImageView);
                 break;
         }
         setTitle(ImageWorker.getTitle());
@@ -192,7 +198,7 @@ public class ImageDetailActivity extends AppCompatActivity {
                 }
                 return true;
             case R.id.open:
-                Uri webpage = Uri.parse(ImageWorker.getUrl());
+                Uri webpage = Uri.parse(FotkiWorker.getUrl());
                 Intent intent = new Intent(Intent.ACTION_VIEW, webpage);
                 if (intent.resolveActivity(getPackageManager()) != null) {
                     startActivity(intent);
@@ -221,7 +227,7 @@ public class ImageDetailActivity extends AppCompatActivity {
             String url = MediaStore.Images.Media.insertImage(
                     getContentResolver(), drawable.getBitmap(), title, null
             );
-            ImageWorker.addToGallery(title, Uri.parse(url));
+            GalleryWorker.add(title, Uri.parse(url));
         }
     }
 

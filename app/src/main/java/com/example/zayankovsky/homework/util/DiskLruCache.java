@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.zayankovsky.homework;
+package com.example.zayankovsky.homework.util;
 
 import android.support.annotation.NonNull;
 

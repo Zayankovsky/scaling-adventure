@@ -7,12 +7,12 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/list"
-        android:name="com.example.zayankovsky.homework.ImageListFragment"
+        android:name="com.example.zayankovsky.homework.ui.ImageListFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
         app:layoutManager="LinearLayoutManager"
-        tools:context=".ImageListFragment"
+        tools:context=".ui.ImageListFragment"
         tools:listitem="@layout/image_list_item" />
 </android.support.v4.widget.SwipeRefreshLayout>

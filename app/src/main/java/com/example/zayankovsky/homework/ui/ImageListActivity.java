@@ -1,4 +1,4 @@
-package com.example.zayankovsky.homework;
+package com.example.zayankovsky.homework.ui;
 
 import android.Manifest;
 import android.app.ActivityOptions;
@@ -31,6 +31,13 @@ import android.util.DisplayMetrics;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+
+import com.example.zayankovsky.homework.R;
+import com.example.zayankovsky.homework.util.FotkiWorker;
+import com.example.zayankovsky.homework.util.GalleryWorker;
+import com.example.zayankovsky.homework.util.ImageCache;
+import com.example.zayankovsky.homework.util.ImageWorker;
+import com.example.zayankovsky.homework.util.ResourcesWorker;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -132,7 +139,9 @@ public class ImageListActivity extends AppCompatActivity
 
         final DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        ImageWorker.init(getResources(), displayMetrics.widthPixels, displayMetrics.densityDpi, columnCount);
+        ImageWorker.init(displayMetrics.widthPixels, columnCount);
+        FotkiWorker.init(getResources());
+        ResourcesWorker.init(displayMetrics.densityDpi);
 
         ImageCache.init(
                 this, Integer.parseInt(sharedPref.getString("memory_cache_size", "50")) * 1024,
@@ -273,7 +282,9 @@ public class ImageListActivity extends AppCompatActivity
         i.putExtra(ImageDetailActivity.POSITION, holder.getAdapterPosition());
         BitmapDrawable drawable = (BitmapDrawable) holder.mImageView.getDrawable();
         if (drawable != null) {
-            ImageWorker.init(drawable.getBitmap());
+            if (holder.sectionNumber == 1) {
+                FotkiWorker.init(drawable.getBitmap());
+            }
             ActivityOptions options = ActivityOptions.makeThumbnailScaleUpAnimation(
                     holder.mImageView, drawable.getBitmap(), 0, 0
             );
@@ -306,7 +317,7 @@ public class ImageListActivity extends AppCompatActivity
     private void saveImageToGallery() {
         try {
             String url = MediaStore.Images.Media.insertImage(getContentResolver(), fileUri.getPath(), fileUri.getLastPathSegment(), null);
-            ImageWorker.addToGallery(fileUri.getLastPathSegment(), Uri.parse(url));
+            GalleryWorker.add(fileUri.getLastPathSegment(), Uri.parse(url));
             //noinspection ResultOfMethodCallIgnored
             new File(fileUri.getPath()).delete();
         } catch (FileNotFoundException ignored) {}

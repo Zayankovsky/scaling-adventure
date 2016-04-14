@@ -1,4 +1,4 @@
-package com.example.zayankovsky.homework;
+package com.example.zayankovsky.homework.ui;
 
 
 import android.app.Activity;
@@ -11,6 +11,8 @@ import android.support.v7.app.ActionBar;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
+
+import com.example.zayankovsky.homework.R;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On

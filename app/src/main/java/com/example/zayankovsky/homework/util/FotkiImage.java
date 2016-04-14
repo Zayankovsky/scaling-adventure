@@ -1,9 +1,9 @@
-package com.example.zayankovsky.homework;
+package com.example.zayankovsky.homework.util;
 
 import java.util.Date;
 import java.util.SortedMap;
 
-class FotkiImage {
+public class FotkiImage {
     private final String author;
     private final String title;
     private final Date published;

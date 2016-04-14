@@ -1,4 +1,4 @@
-package com.example.zayankovsky.homework;
+package com.example.zayankovsky.homework.ui;
 
 import android.content.ContentUris;
 import android.content.Context;
@@ -15,6 +15,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.example.zayankovsky.homework.R;
+import com.example.zayankovsky.homework.util.FotkiImage;
+import com.example.zayankovsky.homework.util.FotkiWorker;
+import com.example.zayankovsky.homework.util.GalleryWorker;
+import com.example.zayankovsky.homework.util.ResourcesWorker;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -58,12 +64,12 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
 
         switch (sectionNumber) {
             case 0:
-                if (ImageWorker.getGallerySize() == 0 && ImageListActivity.isReadExternalStoragePermissionGranted()) {
+                if (GalleryWorker.size() == 0 && ImageListActivity.isReadExternalStoragePermissionGranted()) {
                     updateGallery();
                 }
                 break;
             case 1:
-                if (ImageWorker.getFotkiSize() == 0) {
+                if (FotkiWorker.size() == 0) {
                     updateFotki("http://api-fotki.yandex.ru/api/podhistory/poddate/?limit=" + mBatchSize);
                 }
                 break;
@@ -82,18 +88,18 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
 
         switch (mSectionNumber) {
             case 0:
-                ImageWorker.loadGalleryThumbnail(position, holder.mImageView);
+                GalleryWorker.loadThumbnail(position, holder.mImageView);
                 holder.mTextView.setText(String.valueOf(position + 1));
                 break;
             case 1:
-                ImageWorker.loadFotkiThumbnail(position, holder.mImageView);
+                FotkiWorker.loadThumbnail(position, holder.mImageView);
                 holder.mTextView.setText(
-                        new SimpleDateFormat("d MMM yyyy", Locale.getDefault()).format(ImageWorker.getPODDate())
+                        new SimpleDateFormat("d MMM yyyy", Locale.getDefault()).format(FotkiWorker.getPODDate())
                 );
 
-                if (lastLoadFromNetworkSuccessful && position == ImageWorker.getFotkiSize() - 1) {
+                if (lastLoadFromNetworkSuccessful && position == FotkiWorker.size() - 1) {
                     Calendar calendar = Calendar.getInstance();
-                    calendar.setTime(ImageWorker.getLastPODDate());
+                    calendar.setTime(FotkiWorker.getLastPODDate());
                     calendar.add(Calendar.SECOND, -1);
 
                     updateFotki("http://api-fotki.yandex.ru/api/podhistory/poddate"
@@ -102,7 +108,7 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
                 }
                 break;
             case 2:
-                ImageWorker.loadThumbnail(position, holder.mImageView);
+                ResourcesWorker.loadThumbnail(position, holder.mImageView);
                 holder.mTextView.setText(String.valueOf(position + 1));
                 break;
         }
@@ -123,9 +129,9 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
     public int getItemCount() {
         switch (mSectionNumber) {
             case 0:
-                return ImageWorker.getGallerySize();
+                return GalleryWorker.size();
             case 1:
-                return ImageWorker.getFotkiSize();
+                return FotkiWorker.size();
             case 2:
                 return Integer.MAX_VALUE;
             default:
@@ -137,14 +143,14 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
     public void onRefresh() {
         switch (mSectionNumber) {
             case 0:
-                int itemCount = ImageWorker.getGallerySize();
-                ImageWorker.clearGallery();
+                int itemCount = GalleryWorker.size();
+                GalleryWorker.clear();
                 notifyItemRangeRemoved(0, itemCount);
                 updateGallery();
                 break;
             case 1:
-                itemCount = ImageWorker.getFotkiSize();
-                ImageWorker.clearFotki();
+                itemCount = FotkiWorker.size();
+                FotkiWorker.clear();
                 notifyItemRangeRemoved(0, itemCount);
                 updateFotki("http://api-fotki.yandex.ru/api/podhistory/poddate/?limit=" + mBatchSize);
                 break;
@@ -161,11 +167,11 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
             int indexId = mCursor.getColumnIndex(MediaStore.Images.ImageColumns._ID);
             int indexTitle = mCursor.getColumnIndex(MediaStore.Images.ImageColumns.TITLE);
             while (mCursor.moveToNext()) {
-                ImageWorker.addToGallery(
+                GalleryWorker.add(
                         mCursor.getString(indexTitle),
                         ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, mCursor.getLong(indexId))
                 );
-                notifyItemInserted(ImageWorker.getGallerySize() - 1);
+                notifyItemInserted(GalleryWorker.size() - 1);
             }
             mCursor.close();
         }
@@ -205,7 +211,7 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
 
         @Override
         protected List<FotkiImage> doInBackground(String... urls) {
-            if (ImageWorker.getFotkiSize() == 0) {
+            if (FotkiWorker.size() == 0) {
                 try {
                     //noinspection unchecked
                     publishProgress(loadFromFile());
@@ -224,8 +230,8 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
         protected final void onProgressUpdate(List<FotkiImage>... progress) {
             if (!progress[0].isEmpty()) {
                 loadFromFileSuccessful = true;
-                ImageWorker.addToFotki(progress[0]);
-                notifyItemRangeInserted(ImageWorker.getFotkiSize() - progress[0].size(), progress[0].size());
+                FotkiWorker.add(progress[0]);
+                notifyItemRangeInserted(FotkiWorker.size() - progress[0].size(), progress[0].size());
             }
         }
 
@@ -233,14 +239,14 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
         protected void onPostExecute(List<FotkiImage> result) {
             if (lastLoadFromNetworkSuccessful = !result.isEmpty()) {
                 if (loadFromFileSuccessful) {
-                    int itemCount = ImageWorker.getFotkiSize();
-                    ImageWorker.clearFotki();
+                    int itemCount = FotkiWorker.size();
+                    FotkiWorker.clear();
                     notifyItemRangeRemoved(0, itemCount);
                 }
-                ImageWorker.addToFotki(result);
-                notifyItemRangeInserted(ImageWorker.getFotkiSize() - result.size(), result.size());
+                FotkiWorker.add(result);
+                notifyItemRangeInserted(FotkiWorker.size() - result.size(), result.size());
                 try {
-                    ImageWorker.saveFotki(mParent.getContext().openFileOutput("fotki.dat", Context.MODE_PRIVATE));
+                    FotkiWorker.save(mParent.getContext().openFileOutput("fotki.dat", Context.MODE_PRIVATE));
                 } catch (IOException ignored) {}
             }
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.zayankovsky.homework;
+package com.example.zayankovsky.homework.ui;
 
 import android.app.Activity;
 import android.graphics.Bitmap;

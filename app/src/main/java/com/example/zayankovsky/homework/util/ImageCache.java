@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.zayankovsky.homework;
+package com.example.zayankovsky.homework.util;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -34,9 +34,9 @@ import java.security.NoSuchAlgorithmException;
 
 /**
  * This class handles disk and memory caching of bitmaps in conjunction with the
- * {@link ImageWorker} class.
+ * {@link ImageWorker} subclasses.
  */
-class ImageCache {
+public class ImageCache {
     // Maximum memory cache size in kilobytes
     private static final int MAX_MEMORY_CACHE_SIZE = Math.round(0.8f * Runtime.getRuntime().maxMemory() / 1024);
 
