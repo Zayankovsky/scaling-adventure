@@ -26,12 +26,13 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -77,13 +78,27 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
     }
 
     @Override
+    public int getItemViewType(int position) {
+        return mSectionNumber == 1 && FotkiWorker.isDivider(position) ? 1 : 0;
+    }
+
+    @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.image_list_item, parent, false);
-        return new ViewHolder(view);
+        boolean divider = viewType == 1;
+        View view = LayoutInflater.from(parent.getContext()).inflate(divider ?
+                R.layout.image_list_divider : R.layout.image_list_item, parent, false);
+        return new ViewHolder(view, divider);
     }
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
+        if (holder.divider) {
+            holder.mTextView.setText(
+                    new SimpleDateFormat("LLLL yyyy", Locale.getDefault()).format(FotkiWorker.getPODDate(position))
+            );
+            return;
+        }
+
         holder.sectionNumber = mSectionNumber;
 
         switch (mSectionNumber) {
@@ -93,13 +108,12 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
                 break;
             case 1:
                 FotkiWorker.loadThumbnail(position, holder.mImageView);
-                holder.mTextView.setText(
-                        new SimpleDateFormat("d MMM yyyy", Locale.getDefault()).format(FotkiWorker.getPODDate())
-                );
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(FotkiWorker.getPODDate());
+                holder.mTextView.setText(String.valueOf(calendar.get(Calendar.DATE)));
 
                 if (lastLoadFromNetworkSuccessful && position == FotkiWorker.size() - 1) {
-                    Calendar calendar = Calendar.getInstance();
-                    calendar.setTime(FotkiWorker.getLastPODDate());
+                    calendar.setTime(FotkiWorker.getPODDate(FotkiWorker.size() - 1));
                     calendar.add(Calendar.SECOND, -1);
 
                     updateFotki("http://api-fotki.yandex.ru/api/podhistory/poddate"
@@ -182,43 +196,52 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
     }
 
     private void updateFotki(String stringUrl) {
-        new DownloadXmlTask(
-                (ConnectivityManager) mParent.getContext().getSystemService(Context.CONNECTIVITY_SERVICE)
-        ).execute(stringUrl);
+        new DownloadXmlTask(mParent.getContext()).execute(stringUrl);
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
         public final ImageView mImageView;
         public final TextView mTextView;
+        public final boolean divider;
         public int sectionNumber;
 
-        public ViewHolder(View view) {
+        public ViewHolder(View view, boolean divider) {
             super(view);
             mView = view;
             mImageView = (ImageView) view.findViewById(R.id.image);
             mTextView = (TextView) view.findViewById(R.id.text);
+            this.divider = divider;
         }
     }
 
     // Implementation of AsyncTask used to download XML feed from fotki.yandex.ru.
     private class DownloadXmlTask extends AsyncTask<String, List<FotkiImage>, List<FotkiImage>> {
-        private final ConnectivityManager connMgr;
+        private final Context context;
         private boolean loadFromFileSuccessful = false;
 
-        public DownloadXmlTask(ConnectivityManager connectivityManager) {
-            connMgr = connectivityManager;
+        public DownloadXmlTask(Context context) {
+            this.context = context;
         }
 
         @Override
         protected List<FotkiImage> doInBackground(String... urls) {
             if (FotkiWorker.size() == 0) {
                 try {
-                    //noinspection unchecked
-                    publishProgress(loadFromFile());
+                    DataInputStream inputStream = null;
+                    try {
+                        inputStream = new DataInputStream(new BufferedInputStream(context.openFileInput("fotki.dat")));
+                        //noinspection unchecked
+                        publishProgress(loadFromFile(inputStream));
+                    } finally {
+                        if (inputStream != null) {
+                            inputStream.close();
+                        }
+                    }
                 } catch (IOException ignored) {}
             }
 
+            ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
             if (networkInfo != null && networkInfo.isConnected()) {
                 try {
@@ -234,8 +257,9 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
         protected final void onProgressUpdate(List<FotkiImage>... progress) {
             if (!progress[0].isEmpty()) {
                 loadFromFileSuccessful = true;
+                int positionStart = FotkiWorker.size();
                 FotkiWorker.add(progress[0]);
-                notifyItemRangeInserted(FotkiWorker.size() - progress[0].size(), progress[0].size());
+                notifyItemRangeInserted(positionStart, FotkiWorker.size() - positionStart);
             }
         }
 
@@ -247,10 +271,21 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
                     FotkiWorker.clear();
                     notifyItemRangeRemoved(0, itemCount);
                 }
+                int positionStart = FotkiWorker.size();
                 FotkiWorker.add(result);
-                notifyItemRangeInserted(FotkiWorker.size() - result.size(), result.size());
+                notifyItemRangeInserted(positionStart, FotkiWorker.size() - positionStart);
+                DataOutputStream outputStream = null;
                 try {
-                    FotkiWorker.save(mParent.getContext().openFileOutput("fotki.dat", Context.MODE_PRIVATE));
+                    try {
+                        outputStream = new DataOutputStream(new BufferedOutputStream(
+                                context.openFileOutput("fotki.dat", Context.MODE_PRIVATE)
+                        ));
+                        FotkiWorker.save(outputStream);
+                    } finally {
+                        if (outputStream != null) {
+                            outputStream.close();
+                        }
+                    }
                 } catch (IOException ignored) {}
             }
 
@@ -258,218 +293,230 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
                 ((SwipeRefreshLayout) mParent).setRefreshing(false);
             }
         }
-    }
 
-    private List<FotkiImage> loadFromFile() throws IOException {
-        DataInputStream inputStream = new DataInputStream(
-                new BufferedInputStream(mParent.getContext().openFileInput("fotki.dat"))
-        );
+        private List<FotkiImage> loadFromFile(DataInputStream inputStream) throws IOException {
+            int fotkiSize = inputStream.readInt();
+            List<FotkiImage> fotki = new ArrayList<>(fotkiSize);
 
-        int fotkiSize = inputStream.readInt();
-        List<FotkiImage> fotki = new ArrayList<>(fotkiSize);
+            for (int i = 0; i < fotkiSize; ++i) {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+                Date podDate = null;
+                try {
+                    podDate = dateFormat.parse(inputStream.readUTF());
+                } catch (ParseException ignored) {}
 
-        for (int i = 0; i < fotkiSize; ++i) {
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
-            Date podDate = null;
-            try {
-                podDate = dateFormat.parse(inputStream.readUTF());
-            } catch (ParseException ignored) {}
-
-            int urlsSize = inputStream.readInt();
-            SortedMap<Integer, String> urls = new TreeMap<>();
-            for (int j = 0; j < urlsSize; ++j) {
-                urls.put(inputStream.readInt(), inputStream.readUTF());
-            }
-
-            Date published = null;
-            try {
-                published = dateFormat.parse(inputStream.readUTF());
-            } catch (ParseException ignored) {}
-
-            fotki.add(new FotkiImage(inputStream.readUTF(), inputStream.readUTF(), published, urls, podDate));
-        }
-
-        inputStream.close();
-        return fotki;
-    }
-
-    // Uploads XML from fotki.yandex.ru, parses it. Returns List of FotkiImage objects.
-    private List<FotkiImage> loadFromNetwork(String urlString) throws XmlPullParserException, IOException {
-        InputStream stream = null;
-        // Instantiate the parser
-        YandexFotkiXmlParser yandexFotkiXmlParser = new YandexFotkiXmlParser();
-        List<FotkiImage> fotki = null;
-
-        try {
-            stream = downloadUrl(urlString);
-            fotki = yandexFotkiXmlParser.parse(stream);
-            // Makes sure that the InputStream is closed after the app is
-            // finished using it.
-        } finally {
-            if (stream != null) {
-                stream.close();
-            }
-        }
-
-        // YandexFotkiXmlParser returns a List (called "fotki") of SortedMap objects.
-        // Each SortedMap object represents a single image in the XML feed.
-        return fotki;
-    }
-
-    // Given a string representation of a URL, sets up a connection and gets
-    // an input stream.
-    private InputStream downloadUrl(String urlString) throws IOException {
-        URL url = new URL(urlString);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setReadTimeout(10000 /* milliseconds */);
-        conn.setConnectTimeout(15000 /* milliseconds */);
-        conn.setRequestMethod("GET");
-        conn.setDoInput(true);
-        // Starts the query
-        conn.connect();
-        return conn.getInputStream();
-    }
-
-    private class YandexFotkiXmlParser {
-        // We don't use namespaces
-        private final String ns = null;
-
-        public List<FotkiImage> parse(InputStream in) throws XmlPullParserException, IOException {
-            try {
-                XmlPullParser parser = Xml.newPullParser();
-                parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-                parser.setInput(in, null);
-                parser.nextTag();
-                return readFeed(parser);
-            } finally {
-                in.close();
-            }
-        }
-
-        private List<FotkiImage> readFeed(XmlPullParser parser) throws XmlPullParserException, IOException {
-            List<FotkiImage> fotki = new ArrayList<>();
-
-            parser.require(XmlPullParser.START_TAG, ns, "feed");
-            while (parser.next() != XmlPullParser.END_TAG) {
-                if (parser.getEventType() != XmlPullParser.START_TAG) {
+                boolean isDivider = inputStream.readBoolean();
+                if (isDivider) {
+                    fotki.add(new FotkiImage(null, null, null, null, podDate, true));
                     continue;
                 }
-                String name = parser.getName();
-                // Starts by looking for the entry tag
-                if (name.equals("entry")) {
-                    fotki.add(readFotkiImage(parser));
-                } else {
-                    skip(parser);
+
+                int urlsSize = inputStream.readInt();
+                SortedMap<Integer, String> urls = new TreeMap<>();
+                for (int j = 0; j < urlsSize; ++j) {
+                    urls.put(inputStream.readInt(), inputStream.readUTF());
                 }
+
+                Date published = null;
+                try {
+                    published = dateFormat.parse(inputStream.readUTF());
+                } catch (ParseException ignored) {}
+
+                fotki.add(new FotkiImage(inputStream.readUTF(), inputStream.readUTF(), published, urls, podDate, false));
             }
+
             return fotki;
         }
 
-        // Parses the contents of an image. If it encounters a title or f:img tag, hands it off
-        // to their respective "read" methods for processing. Otherwise, skips the tag.
-        private FotkiImage readFotkiImage(XmlPullParser parser) throws XmlPullParserException, IOException {
-            parser.require(XmlPullParser.START_TAG, ns, "entry");
-            String author = "";
-            String title = "";
-            Date published = null;
-            SortedMap<Integer, String> urls = new TreeMap<>();
-            Date podDate = null;
-            while (parser.next() != XmlPullParser.END_TAG) {
-                if (parser.getEventType() != XmlPullParser.START_TAG) {
-                    continue;
-                }
-                switch (parser.getName()) {
-                    case "author":
-                        author = readAuthor(parser);
-                        break;
-                    case "title":
-                        title = readText(parser, "title");
-                        break;
-                    case "published":
-                        published = readDate(parser, "published");
-                        break;
-                    case "f:img":
-                        readUrl(parser, urls);
-                        break;
-                    case "f:pod-date":
-                        podDate = readDate(parser, "f:pod-date");
-                        break;
-                    default:
-                        skip(parser);
-                        break;
-                }
-            }
-            return new FotkiImage(author, title, published, urls, podDate);
-        }
+        // Uploads XML from fotki.yandex.ru, parses it. Returns List of FotkiImage objects.
+        private List<FotkiImage> loadFromNetwork(String urlString) throws XmlPullParserException, IOException {
+            InputStream stream = null;
+            // Instantiate the parser
+            YandexFotkiXmlParser yandexFotkiXmlParser = new YandexFotkiXmlParser();
+            List<FotkiImage> fotki = null;
 
-        // Processes author tags in the feed.
-        private String readAuthor(XmlPullParser parser) throws IOException, XmlPullParserException {
-            parser.require(XmlPullParser.START_TAG, ns, "author");
-            String author = "";
-            while (parser.next() != XmlPullParser.END_TAG) {
-                if (parser.getEventType() != XmlPullParser.START_TAG) {
-                    continue;
-                }
-                if (parser.getName().equals("name")) {
-                    author = readText(parser, "name");
-                } else {
-                    skip(parser);
-                }
-            }
-            return author;
-        }
-
-        // For the tags name and title, extracts their text values.
-        private String readText(XmlPullParser parser, String tag) throws IOException, XmlPullParserException {
-            parser.require(XmlPullParser.START_TAG, ns, tag);
-            String result = "";
-            if (parser.next() == XmlPullParser.TEXT) {
-                result = parser.getText();
-                parser.nextTag();
-            }
-            parser.require(XmlPullParser.END_TAG, ns, tag);
-            return result;
-        }
-
-        // Processes f:img tags in the feed.
-        private void readUrl(XmlPullParser parser, SortedMap<Integer, String> urls) throws IOException, XmlPullParserException {
-            parser.require(XmlPullParser.START_TAG, ns, "f:img");
-            int width = Integer.parseInt(parser.getAttributeValue(null, "width"));
-            String url = parser.getAttributeValue(null, "href");
-            parser.nextTag();
-            parser.require(XmlPullParser.END_TAG, ns, "f:img");
-            urls.put(width, url);
-        }
-
-        // Processes dates in the feed.
-        private Date readDate(XmlPullParser parser, String tag) throws IOException, XmlPullParserException {
-            parser.require(XmlPullParser.START_TAG, ns, tag);
-            String date = "";
-            if (parser.next() == XmlPullParser.TEXT) {
-                date = parser.getText();
-                parser.nextTag();
-            }
-            parser.require(XmlPullParser.END_TAG, ns, tag);
             try {
-                return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).parse(date);
-            } catch (ParseException e) {
-                return null;
+                stream = downloadUrl(urlString);
+                fotki = yandexFotkiXmlParser.parse(stream);
+                // Makes sure that the InputStream is closed after the app is
+                // finished using it.
+            } finally {
+                if (stream != null) {
+                    stream.close();
+                }
             }
+
+            // YandexFotkiXmlParser returns a List (called "fotki") of SortedMap objects.
+            // Each SortedMap object represents a single image in the XML feed.
+            return fotki;
         }
 
-        private void skip(XmlPullParser parser) throws XmlPullParserException, IOException {
-            if (parser.getEventType() != XmlPullParser.START_TAG) {
-                throw new IllegalStateException();
+        // Given a string representation of a URL, sets up a connection and gets
+        // an input stream.
+        private InputStream downloadUrl(String urlString) throws IOException {
+            URL url = new URL(urlString);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setReadTimeout(10000 /* milliseconds */);
+            conn.setConnectTimeout(15000 /* milliseconds */);
+            conn.setRequestMethod("GET");
+            conn.setDoInput(true);
+            // Starts the query
+            conn.connect();
+            return conn.getInputStream();
+        }
+
+        private class YandexFotkiXmlParser {
+            // We don't use namespaces
+            private final String ns = null;
+
+            public List<FotkiImage> parse(InputStream in) throws XmlPullParserException, IOException {
+                try {
+                    XmlPullParser parser = Xml.newPullParser();
+                    parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+                    parser.setInput(in, null);
+                    parser.nextTag();
+                    return readFeed(parser);
+                } finally {
+                    in.close();
+                }
             }
-            int depth = 1;
-            while (depth != 0) {
-                switch (parser.next()) {
-                    case XmlPullParser.END_TAG:
-                        depth--;
-                        break;
-                    case XmlPullParser.START_TAG:
-                        depth++;
-                        break;
+
+            private List<FotkiImage> readFeed(XmlPullParser parser) throws XmlPullParserException, IOException {
+                List<FotkiImage> fotki = new ArrayList<>();
+
+                parser.require(XmlPullParser.START_TAG, ns, "feed");
+                while (parser.next() != XmlPullParser.END_TAG) {
+                    if (parser.getEventType() != XmlPullParser.START_TAG) {
+                        continue;
+                    }
+                    String name = parser.getName();
+                    // Starts by looking for the entry tag
+                    if (name.equals("entry")) {
+                        FotkiImage image = readFotkiImage(parser);
+                        if (!fotki.isEmpty()) {
+                            Calendar calendar = Calendar.getInstance();
+                            calendar.setTime(image.getPODDate());
+                            int month = calendar.get(Calendar.MONTH);
+                            Date lastPODDate = fotki.get(fotki.size() - 1).getPODDate();
+                            calendar.setTime(lastPODDate);
+                            if (calendar.get(Calendar.MONTH) != month) {
+                                fotki.add(new FotkiImage(null, null, null, null, lastPODDate, true));
+                            }
+                        }
+                        fotki.add(image);
+                    } else {
+                        skip(parser);
+                    }
+                }
+                return fotki;
+            }
+
+            // Parses the contents of an image. If it encounters a title or f:img tag, hands it off
+            // to their respective "read" methods for processing. Otherwise, skips the tag.
+            private FotkiImage readFotkiImage(XmlPullParser parser) throws XmlPullParserException, IOException {
+                parser.require(XmlPullParser.START_TAG, ns, "entry");
+                String author = "";
+                String title = "";
+                Date published = null;
+                SortedMap<Integer, String> urls = new TreeMap<>();
+                Date podDate = null;
+                while (parser.next() != XmlPullParser.END_TAG) {
+                    if (parser.getEventType() != XmlPullParser.START_TAG) {
+                        continue;
+                    }
+                    switch (parser.getName()) {
+                        case "author":
+                            author = readAuthor(parser);
+                            break;
+                        case "title":
+                            title = readText(parser, "title");
+                            break;
+                        case "published":
+                            published = readDate(parser, "published");
+                            break;
+                        case "f:img":
+                            readUrl(parser, urls);
+                            break;
+                        case "f:pod-date":
+                            podDate = readDate(parser, "f:pod-date");
+                            break;
+                        default:
+                            skip(parser);
+                            break;
+                    }
+                }
+                return new FotkiImage(author, title, published, urls, podDate, false);
+            }
+
+            // Processes author tags in the feed.
+            private String readAuthor(XmlPullParser parser) throws IOException, XmlPullParserException {
+                parser.require(XmlPullParser.START_TAG, ns, "author");
+                String author = "";
+                while (parser.next() != XmlPullParser.END_TAG) {
+                    if (parser.getEventType() != XmlPullParser.START_TAG) {
+                        continue;
+                    }
+                    if (parser.getName().equals("name")) {
+                        author = readText(parser, "name");
+                    } else {
+                        skip(parser);
+                    }
+                }
+                return author;
+            }
+
+            // For the tags name and title, extracts their text values.
+            private String readText(XmlPullParser parser, String tag) throws IOException, XmlPullParserException {
+                parser.require(XmlPullParser.START_TAG, ns, tag);
+                String result = "";
+                if (parser.next() == XmlPullParser.TEXT) {
+                    result = parser.getText();
+                    parser.nextTag();
+                }
+                parser.require(XmlPullParser.END_TAG, ns, tag);
+                return result;
+            }
+
+            // Processes f:img tags in the feed.
+            private void readUrl(XmlPullParser parser, SortedMap<Integer, String> urls) throws IOException, XmlPullParserException {
+                parser.require(XmlPullParser.START_TAG, ns, "f:img");
+                int width = Integer.parseInt(parser.getAttributeValue(null, "width"));
+                String url = parser.getAttributeValue(null, "href");
+                parser.nextTag();
+                parser.require(XmlPullParser.END_TAG, ns, "f:img");
+                urls.put(width, url);
+            }
+
+            // Processes dates in the feed.
+            private Date readDate(XmlPullParser parser, String tag) throws IOException, XmlPullParserException {
+                parser.require(XmlPullParser.START_TAG, ns, tag);
+                String date = "";
+                if (parser.next() == XmlPullParser.TEXT) {
+                    date = parser.getText();
+                    parser.nextTag();
+                }
+                parser.require(XmlPullParser.END_TAG, ns, tag);
+                try {
+                    return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).parse(date);
+                } catch (ParseException e) {
+                    return null;
+                }
+            }
+
+            private void skip(XmlPullParser parser) throws XmlPullParserException, IOException {
+                if (parser.getEventType() != XmlPullParser.START_TAG) {
+                    throw new IllegalStateException();
+                }
+                int depth = 1;
+                while (depth != 0) {
+                    switch (parser.next()) {
+                        case XmlPullParser.END_TAG:
+                            depth--;
+                            break;
+                        case XmlPullParser.START_TAG:
+                            depth++;
+                            break;
+                    }
                 }
             }
         }

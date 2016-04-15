@@ -34,9 +34,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -66,6 +66,16 @@ public class FotkiWorker extends ImageWorker {
     }
 
     public static void add(List<FotkiImage> fotki) {
+        if (!FotkiWorker.fotki.isEmpty()) {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(fotki.get(0).getPODDate());
+            int month = calendar.get(Calendar.MONTH);
+            Date lastPODDate = getPODDate(size() - 1);
+            calendar.setTime(lastPODDate);
+            if (calendar.get(Calendar.MONTH) != month) {
+                FotkiWorker.fotki.add(new FotkiImage(null, null, null, null, lastPODDate, true));
+            }
+        }
         FotkiWorker.fotki.addAll(fotki);
     }
 
@@ -73,13 +83,18 @@ public class FotkiWorker extends ImageWorker {
         fotki.clear();
     }
 
-    public static void save(FileOutputStream fileOutputStream) throws IOException {
-        DataOutputStream outputStream = new DataOutputStream(new BufferedOutputStream(fileOutputStream));
-        outputStream.writeInt(fotki.size());
+    public static void save(DataOutputStream outputStream) throws IOException {
+        outputStream.writeInt(size());
 
         for (FotkiImage image : fotki) {
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
             outputStream.writeUTF(dateFormat.format(image.getPODDate()));
+
+            boolean isDivider = image.isDivider();
+            outputStream.writeBoolean(isDivider);
+            if (isDivider) {
+                continue;
+            }
 
             outputStream.writeInt(image.getUrls().size());
             for (SortedMap.Entry<Integer, String> entry : image.getUrls().entrySet()) {
@@ -91,12 +106,14 @@ public class FotkiWorker extends ImageWorker {
             outputStream.writeUTF(image.getAuthor());
             outputStream.writeUTF(image.getTitle());
         }
-
-        outputStream.close();
     }
 
     public static int size() {
         return fotki.size();
+    }
+
+    public static boolean isDivider(int position) {
+        return fotki.get(position).isDivider();
     }
 
     public static String getAuthor() {
@@ -115,8 +132,8 @@ public class FotkiWorker extends ImageWorker {
         return podDate;
     }
 
-    public static Date getLastPODDate() {
-        return fotki.get(fotki.size() - 1).getPODDate();
+    public static Date getPODDate(int position) {
+        return fotki.get(position).getPODDate();
     }
 
     public static void loadThumbnail(int position, ImageView imageView) {

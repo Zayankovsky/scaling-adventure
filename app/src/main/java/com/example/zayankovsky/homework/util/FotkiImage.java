@@ -9,13 +9,16 @@ public class FotkiImage {
     private final Date published;
     private final SortedMap<Integer, String> urls;
     private final Date podDate;
+    private final boolean divider;
 
-    public FotkiImage(String author, String title, Date published, SortedMap<Integer, String> urls, Date podDate) {
+    public FotkiImage(String author, String title, Date published,
+                      SortedMap<Integer, String> urls, Date podDate, boolean divider) {
         this.author = author;
         this.title = title;
         this.published = published;
         this.urls = urls;
         this.podDate = podDate;
+        this.divider = divider;
     }
 
     public String getAuthor() {
@@ -36,5 +39,9 @@ public class FotkiImage {
 
     public Date getPODDate() {
         return podDate;
+    }
+
+    public boolean isDivider() {
+        return divider;
     }
 }

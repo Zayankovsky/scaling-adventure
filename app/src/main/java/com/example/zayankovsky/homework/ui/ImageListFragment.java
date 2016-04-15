@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.zayankovsky.homework.R;
+import com.example.zayankovsky.homework.util.FotkiWorker;
 
 public class ImageListFragment extends Fragment {
     /**
@@ -81,7 +82,16 @@ public class ImageListFragment extends Fragment {
             if (mColumnCount <= 1) {
                 recyclerView.setLayoutManager(new LinearLayoutManager(context));
             } else {
-                recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
+                GridLayoutManager manager = new GridLayoutManager(context, mColumnCount);
+                if (mSectionNumber == 1) {
+                    manager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+                        @Override
+                        public int getSpanSize(int position) {
+                            return FotkiWorker.isDivider(position) ? mColumnCount : 1;
+                        }
+                    });
+                }
+                recyclerView.setLayoutManager(manager);
             }
 
             ImageListAdapter adapter = new ImageListAdapter(mListener, mSectionNumber, mBatchSize, view);
@@ -92,6 +102,13 @@ public class ImageListFragment extends Fragment {
                 public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
                     outRect.left = 5;
                     outRect.top = 5;
+                    if (mSectionNumber == 1) {
+                        int position = parent.getChildAdapterPosition(view);
+                        if (position != RecyclerView.NO_POSITION && FotkiWorker.isDivider(position)) {
+                            outRect.bottom = 50;
+                            return;
+                        }
+                    }
                     outRect.bottom = 5;
                 }
             });
