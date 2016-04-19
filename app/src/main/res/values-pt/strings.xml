@@ -39,4 +39,5 @@
     <string name="pref_title_batch_size">Número de imagens para carregar em um momento</string>
     <string name="detail_text">Autor: %1$s\nPublicado: %2$s</string>
     <string name="image">Imagem</string>
+    <string name="share">Partilhar</string>
 </resources>

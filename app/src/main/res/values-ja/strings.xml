@@ -39,4 +39,5 @@
     <string name="pref_title_batch_size">画像の数は、一度にロードします</string>
     <string name="detail_text">著者：%1$s\n発行：%2$s</string>
     <string name="image">画像</string>
+    <string name="share">共有</string>
 </resources>

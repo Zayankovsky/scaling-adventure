@@ -39,4 +39,5 @@
     <string name="pref_title_batch_size">عدد من الصور لتحميل في وقت</string>
     <string name="detail_text">الكاتب: %1$s\nنشرت: %2$s</string>
     <string name="image">صورة</string>
+    <string name="share">مشاركة</string>
 </resources>

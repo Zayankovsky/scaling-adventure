@@ -39,4 +39,5 @@
     <string name="pref_title_batch_size">Number of images to load at a time</string>
     <string name="detail_text">Author: %1$s\nPublished: %2$s</string>
     <string name="image">Image</string>
+    <string name="share">Share</string>
 </resources>

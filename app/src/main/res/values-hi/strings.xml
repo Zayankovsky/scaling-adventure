@@ -39,4 +39,5 @@
     <string name="pref_title_batch_size">छवियों की संख्या एक समय में लोड करने के लिए</string>
     <string name="detail_text">लेखक: %1$s\nप्रकाशित: %2$s</string>
     <string name="image">छवि</string>
+    <string name="share">साझा करें</string>
 </resources>

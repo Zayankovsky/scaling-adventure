@@ -39,4 +39,5 @@
     <string name="pref_title_batch_size">图像数来同时加载</string>
     <string name="detail_text">作者：%1$s\n发布时间：%2$s</string>
     <string name="image">图片</string>
+    <string name="share">分享</string>
 </resources>

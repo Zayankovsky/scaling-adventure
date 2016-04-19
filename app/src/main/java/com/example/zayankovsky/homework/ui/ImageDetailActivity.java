@@ -21,6 +21,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -29,6 +30,7 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.ContextMenu;
@@ -48,6 +50,10 @@ import com.example.zayankovsky.homework.util.GalleryWorker;
 import com.example.zayankovsky.homework.util.ImageWorker;
 import com.example.zayankovsky.homework.util.ResourcesWorker;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
@@ -55,6 +61,7 @@ public class ImageDetailActivity extends AppCompatActivity {
     public static final String SECTION_NUMBER = "section_number";
     public static final String POSITION = "position";
     private ImageView mImageView;
+    private int mSectionNumber = 0;
 
     private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 200;
 
@@ -73,7 +80,9 @@ public class ImageDetailActivity extends AppCompatActivity {
         mImageView = (ImageView) findViewById(R.id.imageView);
         final TextView mTextView = (TextView) findViewById(R.id.textView);
 
-        final int sectionNumber = getIntent().getIntExtra(SECTION_NUMBER, 0);
+        mSectionNumber = getIntent().getIntExtra(SECTION_NUMBER, 0);
+        registerForContextMenu(mImageView);
+        mImageView.setLongClickable(false);
 
         // Enable some additional newer visibility and ActionBar features
         // to create a more immersive photo viewing experience
@@ -90,7 +99,7 @@ public class ImageDetailActivity extends AppCompatActivity {
                         public void onSystemUiVisibilityChange(int vis) {
                             if ((vis & View.SYSTEM_UI_FLAG_LOW_PROFILE) != 0) {
                                 actionBar.hide();
-                                if (sectionNumber == 1) {
+                                if (mSectionNumber == 1) {
                                     mTextView.animate().translationY(mTextView.getHeight()).setListener(new AnimatorListenerAdapter() {
                                         @Override
                                         public void onAnimationEnd(Animator animation) {
@@ -100,7 +109,7 @@ public class ImageDetailActivity extends AppCompatActivity {
                                 }
                             } else {
                                 actionBar.show();
-                                if (sectionNumber == 1) {
+                                if (mSectionNumber == 1) {
                                     mTextView.animate().translationY(0).setListener(new AnimatorListenerAdapter() {
                                         @Override
                                         public void onAnimationStart(Animator animation) {
@@ -124,14 +133,12 @@ public class ImageDetailActivity extends AppCompatActivity {
         // (so a single cache can be used over all pages in the ViewPager)
         // based on the extra passed in to this activity
         int position = getIntent().getIntExtra(POSITION, 0);
-        switch (sectionNumber) {
+        switch (mSectionNumber) {
             case 0:
                 GalleryWorker.loadImage(position, mImageView);
                 break;
             case 1:
                 FotkiWorker.loadImage(position, mImageView);
-                registerForContextMenu(mImageView);
-                mImageView.setLongClickable(false);
                 mTextView.setText(getResources().getString(
                         R.string.detail_text, FotkiWorker.getAuthor(),
                         new SimpleDateFormat("d MMMM yyyy", Locale.getDefault()).format(FotkiWorker.getPublished())
@@ -181,6 +188,11 @@ public class ImageDetailActivity extends AppCompatActivity {
         super.onCreateContextMenu(menu, v, menuInfo);
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.context_menu, menu);
+
+        switch (mSectionNumber) {
+            case 0: menu.findItem(R.id.save).setVisible(false);
+            case 2: menu.findItem(R.id.open).setVisible(false);
+        }
     }
 
     @Override
@@ -202,7 +214,51 @@ public class ImageDetailActivity extends AppCompatActivity {
                 Intent intent = new Intent(Intent.ACTION_VIEW, webpage);
                 if (intent.resolveActivity(getPackageManager()) != null) {
                     startActivity(intent);
+                    return true;
                 }
+                return false;
+            case R.id.share:
+                BitmapDrawable drawable = (BitmapDrawable) mImageView.getDrawable();
+                if (drawable == null) {
+                    return false;
+                }
+                // Get the files/images subdirectory of internal storage
+                File imagesDir = new File(getFilesDir(), "images");
+                if (!imagesDir.mkdirs() && !imagesDir.isDirectory()) {
+                    return false;
+                }
+
+                File imageFile = new File(imagesDir, ImageWorker.getTitle() + ".png");
+                OutputStream outputStream = null;
+                try {
+                    try {
+                        outputStream = new FileOutputStream(imageFile);
+                        drawable.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+                    } finally {
+                        if (outputStream != null) {
+                            outputStream.close();
+                        }
+                    }
+                } catch (IOException e) {
+                    return false;
+                }
+
+                // Use the FileProvider to get a content URI
+                Uri imageUri;
+                try {
+                    imageUri = FileProvider.getUriForFile(this, "com.example.zayankovsky.homework.fileprovider", imageFile);
+                } catch (IllegalArgumentException e) {
+                    return false;
+                }
+
+                Intent shareIntent = new Intent();
+                shareIntent.setAction(Intent.ACTION_SEND);
+                // Put the Uri and MIME type in the result Intent
+                shareIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
+                shareIntent.setType(getContentResolver().getType(imageUri));
+                // Grant temporary read permission to the content URI
+                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                startActivity(Intent.createChooser(shareIntent, null));
                 return true;
             default:
                 return super.onContextItemSelected(item);
@@ -224,9 +280,7 @@ public class ImageDetailActivity extends AppCompatActivity {
         BitmapDrawable drawable = (BitmapDrawable) mImageView.getDrawable();
         if (drawable != null) {
             String title = ImageWorker.getTitle();
-            String url = MediaStore.Images.Media.insertImage(
-                    getContentResolver(), drawable.getBitmap(), title, null
-            );
+            String url = MediaStore.Images.Media.insertImage(getContentResolver(), drawable.getBitmap(), title, null);
             GalleryWorker.add(title, Uri.parse(url));
         }
     }

@@ -39,4 +39,5 @@
     <string name="pref_title_batch_size">চিত্র সংখ্যা একবারে লোড করা</string>
     <string name="detail_text">লেখক: %1$s\nপ্রকাশিত: %2$s</string>
     <string name="image">ভাবমূর্তি</string>
+    <string name="share">ভাগ</string>
 </resources>
