@@ -29,8 +29,6 @@ import java.util.List;
 
 public class ResourcesWorker extends ImageWorker {
 
-    private static int mScreenDensity;
-
     private static final int[] imageIds = {
             R.drawable.image_1, R.drawable.image_2, R.drawable.image_3,
             R.drawable.image_4, R.drawable.image_5, R.drawable.image_6,
@@ -65,10 +63,6 @@ public class ResourcesWorker extends ImageWorker {
         Collections.shuffle(randomizer);
     }
 
-    public static void init(int screenDensity) {
-        mScreenDensity = screenDensity;
-    }
-
     public static void loadThumbnail(int position, ImageView imageView) {
         getFromCacheOrResources("thumbnails/" + mThumbnailWidth + "/", position, imageView, true);
     }
@@ -97,10 +91,7 @@ public class ResourcesWorker extends ImageWorker {
         Bitmap value = ImageCache.getBitmapFromMemoryCache(data);
 
         if (value == null) {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inDensity = mScreenDensity;
-            options.inScaled = false;
-            value = BitmapFactory.decodeResource(resources, imageIds[index], options);
+            value = BitmapFactory.decodeResource(resources, imageIds[index]);
             if (isThumbnail) {
                 value = Bitmap.createScaledBitmap(
                         value, mThumbnailWidth, value.getHeight() * mThumbnailWidth / value.getWidth(), false

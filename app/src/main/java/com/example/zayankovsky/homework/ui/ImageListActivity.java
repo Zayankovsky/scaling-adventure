@@ -127,12 +127,16 @@ public class ImageListActivity extends AppCompatActivity
         mViewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
-                if (position == 0) {
-                    navigationView.setCheckedItem(R.id.nav_gallery);
-                } else if (position == 1) {
-                    navigationView.setCheckedItem(R.id.nav_fotki);
-                } else if (position == 2) {
-                    navigationView.setCheckedItem(R.id.nav_cache);
+                switch (position) {
+                    case 0:
+                        navigationView.setCheckedItem(R.id.nav_gallery);
+                        break;
+                    case 1:
+                        navigationView.setCheckedItem(R.id.nav_fotki);
+                        break;
+                    case 2:
+                        navigationView.setCheckedItem(R.id.nav_cache);
+                        break;
                 }
             }
         });
@@ -141,7 +145,6 @@ public class ImageListActivity extends AppCompatActivity
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         ImageWorker.init(displayMetrics.widthPixels, columnCount);
         FotkiWorker.init(getResources());
-        ResourcesWorker.init(displayMetrics.densityDpi);
 
         ImageCache.init(
                 this, Integer.parseInt(sharedPref.getString("memory_cache_size", "50")) * 1024,
@@ -256,22 +259,18 @@ public class ImageListActivity extends AppCompatActivity
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE:
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // permission was granted, yay!
+        // If request is cancelled, the result arrays are empty.
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            // permission was granted, yay!
+            switch (requestCode) {
+                case MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE:
                     myPermissionsGrantedReadExternalStorage = true;
                     mViewPager.getAdapter().notifyDataSetChanged();
-                }
-                break;
-            case MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE:
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // permission was granted, yay!
+                    break;
+                case MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE:
                     saveImageToGallery();
-                }
-                break;
+                    break;
+            }
         }
     }
 
