@@ -40,4 +40,5 @@
     <string name="detail_text">लेखक: %1$s\nप्रकाशित: %2$s</string>
     <string name="image">छवि</string>
     <string name="share">साझा करें</string>
+    <string name="open">… में खोलें</string>
 </resources>

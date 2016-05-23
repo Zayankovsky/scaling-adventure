@@ -20,6 +20,7 @@
 
     <string name="save">Сохранить в галерее</string>
     <string name="browser">Открыть в браузере</string>
+    <string name="open">Открыть с помощью …</string>
     <string name="share">Отправить</string>
 
     <string name="image">Изображение</string>

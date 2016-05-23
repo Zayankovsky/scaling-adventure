@@ -40,4 +40,5 @@
     <string name="detail_text">লেখক: %1$s\nপ্রকাশিত: %2$s</string>
     <string name="image">ভাবমূর্তি</string>
     <string name="share">ভাগ</string>
+    <string name="open">… দিয়ে ওপেন</string>
 </resources>

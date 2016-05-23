@@ -2,8 +2,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/save"
         android:title="@string/save" />
-    <item android:id="@+id/open"
+    <item android:id="@+id/browser"
         android:title="@string/browser" />
+    <item android:id="@+id/open"
+        android:title="@string/open" />
     <item android:id="@+id/share"
         android:title="@string/share" />
 </menu>

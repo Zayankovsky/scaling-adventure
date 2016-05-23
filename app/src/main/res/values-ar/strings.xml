@@ -40,4 +40,5 @@
     <string name="detail_text">الكاتب: %1$s\nنشرت: %2$s</string>
     <string name="image">صورة</string>
     <string name="share">مشاركة</string>
+    <string name="open">فتح باستخدام …</string>
 </resources>

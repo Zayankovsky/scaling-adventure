@@ -191,7 +191,7 @@ public class ImageDetailActivity extends AppCompatActivity {
 
         switch (mSectionNumber) {
             case 0: menu.findItem(R.id.save).setVisible(false);
-            case 2: menu.findItem(R.id.open).setVisible(false);
+            case 2: menu.findItem(R.id.browser).setVisible(false);
         }
     }
 
@@ -209,7 +209,7 @@ public class ImageDetailActivity extends AppCompatActivity {
                     saveImageToGallery();
                 }
                 return true;
-            case R.id.open:
+            case R.id.browser:
                 Uri webpage = Uri.parse(FotkiWorker.getUrl());
                 Intent intent = new Intent(Intent.ACTION_VIEW, webpage);
                 if (intent.resolveActivity(getPackageManager()) != null) {
@@ -217,37 +217,23 @@ public class ImageDetailActivity extends AppCompatActivity {
                     return true;
                 }
                 return false;
+            case R.id.open:
+                Uri imageUri = getUriForImage();
+                if (imageUri == null) {
+                    return false;
+                }
+
+                Intent openIntent = new Intent();
+                openIntent.setAction(Intent.ACTION_VIEW);
+                // Put the Uri and MIME type in the result Intent
+                openIntent.setDataAndType(imageUri, getContentResolver().getType(imageUri));
+                // Grant temporary read permission to the content URI
+                openIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                startActivity(openIntent);
+                return true;
             case R.id.share:
-                BitmapDrawable drawable = (BitmapDrawable) mImageView.getDrawable();
-                if (drawable == null) {
-                    return false;
-                }
-                // Get the files/images subdirectory of internal storage
-                File imagesDir = new File(getFilesDir(), "images");
-                if (!imagesDir.mkdirs() && !imagesDir.isDirectory()) {
-                    return false;
-                }
-
-                File imageFile = new File(imagesDir, ImageWorker.getTitle() + ".png");
-                OutputStream outputStream = null;
-                try {
-                    try {
-                        outputStream = new FileOutputStream(imageFile);
-                        drawable.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, outputStream);
-                    } finally {
-                        if (outputStream != null) {
-                            outputStream.close();
-                        }
-                    }
-                } catch (IOException e) {
-                    return false;
-                }
-
-                // Use the FileProvider to get a content URI
-                Uri imageUri;
-                try {
-                    imageUri = FileProvider.getUriForFile(this, "com.example.zayankovsky.homework.fileprovider", imageFile);
-                } catch (IllegalArgumentException e) {
+                imageUri = getUriForImage();
+                if (imageUri == null) {
                     return false;
                 }
 
@@ -282,6 +268,40 @@ public class ImageDetailActivity extends AppCompatActivity {
             String title = ImageWorker.getTitle();
             String url = MediaStore.Images.Media.insertImage(getContentResolver(), drawable.getBitmap(), title, null);
             GalleryWorker.add(title, Uri.parse(url));
+        }
+    }
+
+    private Uri getUriForImage() {
+        BitmapDrawable drawable = (BitmapDrawable) mImageView.getDrawable();
+        if (drawable == null) {
+            return null;
+        }
+        // Get the files/images subdirectory of internal storage
+        File imagesDir = new File(getFilesDir(), "images");
+        if (!imagesDir.mkdirs() && !imagesDir.isDirectory()) {
+            return null;
+        }
+
+        File imageFile = new File(imagesDir, ImageWorker.getTitle() + ".png");
+        OutputStream outputStream = null;
+        try {
+            try {
+                outputStream = new FileOutputStream(imageFile);
+                drawable.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+            } finally {
+                if (outputStream != null) {
+                    outputStream.close();
+                }
+            }
+        } catch (IOException e) {
+            return null;
+        }
+
+        // Use the FileProvider to get a content URI
+        try {
+            return FileProvider.getUriForFile(this, "com.example.zayankovsky.homework.fileprovider", imageFile);
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
 

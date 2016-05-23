@@ -40,4 +40,5 @@
     <string name="detail_text">Autor: %1$s\nPublicado: %2$s</string>
     <string name="image">Imagen</string>
     <string name="share">Compartir</string>
+    <string name="open">Abrir con …</string>
 </resources>

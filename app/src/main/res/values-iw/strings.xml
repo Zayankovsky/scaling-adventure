@@ -40,4 +40,5 @@
     <string name="detail_text">מחבר: %1$s\nפורסם: %2$s</string>
     <string name="image">תמונה</string>
     <string name="share">לחלוק</string>
+    <string name="open">פתח עם …</string>
 </resources>
